@@ -1,0 +1,156 @@
+#body {
+    font-size: 20px;
+}
+
+.dc-chart g.row text {
+    fill: #4d4d4d;
+    font-size: 0.8em;
+}
+
+.dc-chart .pie-slice {
+    fill: #4d4d4d;
+}
+
+.dc-chart .axis.x text {
+    fill: #4d4d4d;
+}
+
+.dc-chart .axis.x path,
+.axis.x line {
+    fill: none;
+    stroke: #fff;
+}
+
+#hdx-3W-where {
+    height: 360px;
+    width: 100%;
+}
+
+#whoRegional {
+    height: 360px;
+    width: 100%;
+}
+
+#wheretitle {
+    padding-bottom: 10px;
+}
+
+#hdx-3W-who svg g g.axis {
+    display: none;
+}
+
+#hdx-3W-what svg g g.axis {
+    display: none;
+}
+
+#regionalCash svg g g.axis.y {
+    display: none;
+}
+
+#regionalCash {
+    padding-bottom: 15px;
+}
+
+#header {
+    border-bottom-color: #dddddd;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    margin-bottom: 10px;
+}
+
+#header2 {
+    border-bottom-color: #dddddd;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    margin-bottom: 15px;
+    /*    margin-top: 30px;*/
+}
+
+#header3 {
+    border-bottom-color: #dddddd;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    margin-bottom: 5px;
+    /*    margin-top: 10px;*/
+}
+
+.colheight {
+    height: 450px;
+}
+
+.removepadding {
+    padding-right: 0px;
+    padding-left: 0px;
+}
+
+.hdx-3w-chart {
+    width: 100%;
+}
+
+.hdx-3w-info {
+    padding: 5px;
+    background-color: white;
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+}
+
+.col-md-3 p {
+    padding-left: 40px;
+}
+
+.col-xs-3 p {
+    padding-left: 40px;
+}
+
+#date {
+    text-align: right;
+    margin-top: 35px;
+}
+
+#reset {
+    float: right;
+    margin-bottom: 5px;
+    margin-top: 40px;
+}
+
+.col-md-4 {
+    color: #848484;
+}
+
+.col-md-6 {
+    color: #848484;
+}
+
+#numbers p {
+    color: #03a9f4;
+    font-size: 30px;
+}
+
+h4 {
+    color: #999999;
+}
+
+#filters p {
+    text-align: justify;
+    color: #4d4d4d;
+    font-size: 10px;
+    padding-left: 0px;
+    padding-top: 10px;
+    width: 200px;
+}
+
+#dataTab {
+    overflow-y: auto;
+    height: 400px;
+}
+
+.table.table-condensed thead tr th {
+    font-size: 14px;
+    color: #999999;
+}
+
+.table.table-condensed tr td {
+    font-size: 12px;
+    color: #4d4d4d;
+}
