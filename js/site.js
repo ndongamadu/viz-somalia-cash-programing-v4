@@ -355,7 +355,8 @@ function generate3WComponent(config, data, geom) {
         .html({
             none: "<span style=\"color:steelblue; font-size: 26px;\">unavailable</span>"
         })
-        .formatNumber(formatComma);
+        .formatNumber(formatDecimalComma);
+    //        .formatNumber(formatComma);
 
     amountTransfered.group(gp)
         .valueAccessor(amountT)
@@ -366,7 +367,7 @@ function generate3WComponent(config, data, geom) {
 
     numberOrgs.group(gp)
         .valueAccessor(numO)
-        .formatNumber(formatComma);
+        .formatNumber(formatDecimalComma);
 
     //j'ai la flemme de changer le nom de la variable mais c'est le AVG 
     numberClusters.group(gp)
