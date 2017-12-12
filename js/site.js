@@ -257,14 +257,14 @@ function generate3WComponent(config, data, geom) {
         })
         .xAxis().ticks(0);
 
-    whatChart.width($('#hxd-3W-what').width()).height(250)
+    whatChart.width($('#hxd-3W-what').width()).height(350)
         .dimension(whatDimension)
         .group(whatGroup)
         .elasticX(true)
         .data(function (group) {
             return group.top(15);
         })
-        .labelOffsetY(13)
+        .labelOffsetY(31)
         .colors([config.color])
         .colorAccessor(function (d) {
             return 0;
@@ -353,7 +353,7 @@ function generate3WComponent(config, data, geom) {
     peopleAssisted.group(gp)
         .valueAccessor(peopleA)
         .html({
-            none: "<span style=\"color:steelblue; font-size: 26px;\">unavailable</span>"
+            none: "<span style=\"color:#03a9f4; font-size: 26px;\">unavailable</span>"
         })
         .formatNumber(formatDecimalComma);
     //        .formatNumber(formatComma);
@@ -361,7 +361,7 @@ function generate3WComponent(config, data, geom) {
     amountTransfered.group(gp)
         .valueAccessor(amountT)
         .html({
-            none: "<span style=\"color:steelblue; font-size: 26px;\">unavailable</span>"
+            none: "<span style=\"color:#03a9f4; font-size: 26px;\">unavailable</span>"
         })
         .formatNumber(formatMoney);
 
@@ -372,7 +372,11 @@ function generate3WComponent(config, data, geom) {
     //j'ai la flemme de changer le nom de la variable mais c'est le AVG
     numberClusters.group(gp)
         .valueAccessor(numAvg)
+        .html({
+            none: "<span style=\"color:#03a9f4; font-size: 26px;\">unavailable</span>"
+        })
         .formatNumber(formatDecimalAVG);
+
 
 
     dc.renderAll();
