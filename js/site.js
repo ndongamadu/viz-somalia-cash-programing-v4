@@ -13,7 +13,7 @@ var config = {
     conditonalityField: "Conditionality",
     restrictionField: "Restriction",
     ruralField: "RURAL/URBAN",
-    transferValue: "Individuals",
+    transferValue: "Beneficiaries",
     estimatedField: "Estimated"
 };
 
