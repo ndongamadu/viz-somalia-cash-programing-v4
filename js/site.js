@@ -1,5 +1,5 @@
 var config = {
-    data: "data/cash-september.json",
+    data: "data/cash-october.json",
     whoFieldName: "Organization",
     whatFieldName: "Cluster",
     whereFieldName: "DIS_CODE",
