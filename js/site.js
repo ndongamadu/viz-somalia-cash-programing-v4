@@ -3,7 +3,6 @@ var config = {
     whoFieldName: "Organization",
     whatFieldName: "Cluster",
     whereFieldName: "DIS_CODE",
-    sum: true,
     sumField: "Beneficiaries",
     geo: "data/Somalia_District_Polygon.json",
     joinAttribute: "DIS_CODE",
@@ -16,6 +15,43 @@ var config = {
     transferValue: "Beneficiaries",
     estimatedField: "Estimated"
 };
+
+function hxlProxyToJSON(input, headers) {
+    var output = [];
+    var keys = []
+    input.forEach(function (e, i) {
+        if (i == 0) {
+            e.forEach(function (e2, i2) {
+                var parts = e2.split('+');
+                var key = parts[0]
+                if (parts.length > 1) {
+                    var atts = parts.splice(1, parts.length);
+                    atts.sort();
+                    atts.forEach(function (att) {
+                        key += '+' + att
+                    });
+                }
+                keys.push(key);
+            });
+        } else {
+            var row = {};
+            e.forEach(function (e2, i2) {
+                row[keys[i2]] = e2;
+            });
+            output.push(row);
+        }
+    });
+    return output;
+}
+
+function generateSettings(dateOfData, metadata) {
+    $('#dateOfData a').text(dateOfData);
+    $('#methodology p').text(metadata);
+}
+
+var monthlyMonths = ['x'],
+    monthlyBeneficiaries = ['Beneficiaries'],
+    monthlyTransfer = ['Transfer value'];
 
 
 function generate3WComponent(config, data, geom) {
@@ -35,11 +71,10 @@ function generate3WComponent(config, data, geom) {
 
 
 
-
     var peopleAssisted = dc.numberDisplay('#peopleAssisted');
     var amountTransfered = dc.numberDisplay('#amountTransfered');
     var numberOrgs = dc.numberDisplay('#numberOrgs');
-    var numberClusters = dc.numberDisplay('#numberClusters');
+    //var numberClusters = dc.numberDisplay('#numberClusters');
 
     var cf = crossfilter(data);
 
@@ -73,11 +108,6 @@ function generate3WComponent(config, data, geom) {
         return d[config.ruralField];
     });
 
-    // var whoGroup = whoDimension.group();
-    // var whatGroup = whatDimension.group();
-    // var whereGroup = whereDimension.group();
-
-    // var sortedRegDim = whoRegionalDim.top(Infinity);
     var whoRegionalGroup = whoRegionalDim.group().reduceSum(function (d) {
         return d[config.sumField]
     });
@@ -117,7 +147,6 @@ function generate3WComponent(config, data, geom) {
         function (p, v) {
             p.peopleAssisted += +v[config.sumField];
             p.amountTransfered += +v["Estimated"];
-            p.totalHH += +v["Households"];
 
             if (v["Organization"] in p.orgas)
                 p.orgas[v["Organization"]]++;
@@ -125,19 +154,11 @@ function generate3WComponent(config, data, geom) {
                 p.orgas[v["Organization"]] = 1;
                 p.numOrgs++;
             }
-
-            if (p.totalHH != 0) {
-                p.avg = p.amountTransfered / p.totalHH;
-                // console.log(p.totalHH);
-            } else
-                p.avg = 0;
-            //console.log(p.orgas);
             return p;
         },
         function (p, v) {
             p.peopleAssisted -= +v[config.sumField];
             p.amountTransfered -= +v["Estimated"];
-            p.totalHH -= +v["Households"];
 
             p.orgas[v["Organization"]]--;
             if (p.orgas[v["Organization"]] == 0) {
@@ -145,19 +166,12 @@ function generate3WComponent(config, data, geom) {
                 p.numOrgs--;
             }
 
-            if (p.peopleAssisted < 0) p.peopleAssisted = 0;
-            if (p.amountTransfered < 0) p.amountTransfered = 0;
-            if (p.totalHH != 0)
-                p.avg = p.amountTransfered / p.totalHH;
-
             return p;
         },
         function () {
             return {
                 peopleAssisted: 0,
                 amountTransfered: 0,
-                totalHH: 0,
-                avg: 0,
                 numOrgs: 0,
                 orgas: {}
             };
@@ -166,9 +180,20 @@ function generate3WComponent(config, data, geom) {
     );
 
     var all = cf.groupAll();
+    //tooltip
+    var rowtip = d3.tip().attr('class', 'd3-tip').html(function (d) {
+        return d.key + ': ' + d3.format('0,000')(d.value);
+
+    });
+
+    //tooltip
+    var slicetip = d3.tip().attr('class', 'd3-tip').html(function (d) {
+        return d.data.key + ': ' + d3.format('0,000')(d.value);
+    });
 
     var formatComma = d3.format(',');
     var formatDecimalComma = d3.format(",.0f");
+
     var formatDecimal = function (d) {
         ret = d3.format(".3f");
         return "$ " + ret(d);
@@ -181,61 +206,73 @@ function generate3WComponent(config, data, geom) {
         return "$ " + formatDecimalComma(d);
     };
 
-    var colorScale = d3.scale.ordinal().range(['#DDDDDD', '#A7C1D3', '#71A5CA', '#3B88C0', '#056CB6']);
+    var colorScale = d3.scale.ordinal().range(['#DDDDDD', '#A7C1D3', '#71A5CA', '#73A9D9', '#8CBCD2', '#3B88C0', '#056CB6']);
 
 
     filterMechanismPie.width(190)
         .height(190)
         .radius(80)
-        .innerRadius(25)
+        .innerRadius(40)
         .dimension(dimMecha)
         .group(groupMecha)
         .colors(colorScale)
-        .renderTitle(true)
         .title(function (d) {
-            text = d.key + " | No. beneficiaries : " + formatComma(d.value);
-            return capitalizeFirstLetter(text);
+            return;
+        }).on('renderlet', function (chart) {
+            chart.selectAll('text.pie-slice')
+                .attr('transform', function (d) {
+                    var translate = d3.select(this).attr('transform');
+                    var ang = ((d.startAngle + d.endAngle) / 2 * 180 / Math.PI) % 360;
+                    return translate + ' rotate(' + ang + ')';
+                });
         });
+
 
     var colorScale3 = d3.scale.ordinal().range(['#DDDDDD', '#A7C1D3', '#71A5CA', '#3B88C0']);
 
     filtercondPie.width(190)
         .height(190)
         .radius(80)
-        .innerRadius(25)
+        .innerRadius(40)
+
         .dimension(dimCond)
         .group(groupCond)
-        .colors(colorScale3)
-        .renderTitle(true)
+        //.colors(colorScale3)
         .title(function (d) {
-            text = d.key + " | No. Beneficiaries : " + formatComma(d.value);
-            return capitalizeFirstLetter(text);
+            return;
+        }).on('renderlet', function (chart) {
+            chart.selectAll('text.pie-slice')
+                .attr('transform', function (d) {
+                    var translate = d3.select(this).attr('transform');
+                    var ang = ((d.startAngle + d.endAngle) / 2 * 180 / Math.PI) % 360;
+                    if (ang < 180) ang -= 90;
+                    else ang += 90;
+                    return translate + ' rotate(' + ang + ')';
+                });
         });
 
     filterRestPie.width(190)
         .height(190)
         .radius(80)
-        .innerRadius(25)
+        .innerRadius(40)
+
         .dimension(dimRest)
         .group(groupRest)
-        .renderTitle(true)
         .title(function (d) {
-            text = d.key + " | No. Beneficiaries : " + formatComma(d.value);
-            return capitalizeFirstLetter(text);
+            return;
         });
 
 
     filterRuralUrban.width(190)
         .height(190)
         .radius(80)
-        .innerRadius(25)
+        .innerRadius(40)
+
         .dimension(dimRuralUrban)
         .group(groupRuralUrban)
-        .colors(colorScale)
-        .renderTitle(true)
+        .colors(colorScale3)
         .title(function (d) {
-            text = d.key + " | No. Beneficiaries : " + formatComma(d.value);
-            return capitalizeFirstLetter(text);
+            return;
         });
 
     whoChart.width($('#hxd-3W-who').width()).height(400)
@@ -250,11 +287,6 @@ function generate3WComponent(config, data, geom) {
         .colorAccessor(function (d, i) {
             return 0;
         })
-        .renderTitle(true)
-        .title(function (d) {
-            text = d.key + " | No. Beneficiaries : " + formatComma(d.value);
-            return capitalizeFirstLetter(text);
-        })
         .xAxis().ticks(0);
 
     whatChart.width($('#hxd-3W-what').width()).height(350)
@@ -268,11 +300,6 @@ function generate3WComponent(config, data, geom) {
         .colors([config.color])
         .colorAccessor(function (d) {
             return 0;
-        })
-        .renderTitle(true)
-        .title(function (d) {
-            text = d.key + " | No. Beneficiaries : " + formatComma(d.value);
-            return capitalizeFirstLetter(text);
         })
         .xAxis().ticks(0);
 
@@ -289,13 +316,7 @@ function generate3WComponent(config, data, geom) {
         .colorAccessor(function (d) {
             return 0;
         })
-        .renderTitle(true)
-        .title(function (d) {
-            text = d.key + " | No. Beneficiaries : " + formatComma(d.value);
-            return text; //capitalizeFirstLetter(text);
-        })
         .xAxis().ticks(0);
-
 
 
 
@@ -369,17 +390,49 @@ function generate3WComponent(config, data, geom) {
         .valueAccessor(numO)
         .formatNumber(formatDecimalComma);
 
-    //j'ai la flemme de changer le nom de la variable mais c'est le AVG
-    numberClusters.group(gp)
-        .valueAccessor(numAvg)
-        .html({
-            none: "<span style=\"color:#03a9f4; font-size: 26px;\">unavailable</span>"
-        })
-        .formatNumber(formatDecimalAVG);
-
-
 
     dc.renderAll();
+
+    d3.selectAll('g.row').call(rowtip);
+    d3.selectAll('g.row').on('mouseover', rowtip.show).on('mouseout', rowtip.hide);
+
+    d3.selectAll('g.pie-slice').call(slicetip);
+    d3.selectAll('g.pie-slice').on('mouseover', slicetip.show).on('mouseout', slicetip.hide);
+
+    //monthly c3 chart
+
+    var monthlyChart = c3.generate({
+        bindto: '#monthlyChart',
+        size: {
+            height: 350
+        },
+        data: {
+            x: 'x',
+            columns: [monthlyMonths, monthlyBeneficiaries, monthlyTransfer]
+        },
+        axis: {
+            x: {
+                type: 'timeseries',
+                localtime: false,
+                tick: {
+                    format: '%b %Y'
+                }
+            },
+            y: {
+                tick: {
+                    format: d3.format('.2s')
+                }
+            }
+        },
+        tooltip: {
+            format: {
+                value: d3.format(',')
+            }
+        },
+        padding: {
+            right: 35
+        }
+    });
 
     var map = whereChart.map();
 
@@ -392,7 +445,10 @@ function generate3WComponent(config, data, geom) {
 
     function zoomToGeom(geom) {
         var bounds = d3.geo.bounds(geom);
-        map.fitBounds([[bounds[0][1], bounds[0][0]], [bounds[1][1], bounds[1][0]]]);
+        map.fitBounds([
+            [bounds[0][1], bounds[0][0]],
+            [bounds[1][1], bounds[1][0]]
+        ]);
     }
 
     function genLookup(geojson, config) {
@@ -410,34 +466,13 @@ function generate3WComponent(config, data, geom) {
 
 }
 
-//function hxlProxyToJSON(input, headers) {
-//    var output = [];
-//    var keys = []
-//    input.forEach(function (e, i) {
-//        if (i == 0) {
-//            e.forEach(function (e2, i2) {
-//                var parts = e2.split('+');
-//                var key = parts[0]
-//                if (parts.length > 1) {
-//                    var atts = parts.splice(1, parts.length);
-//                    atts.sort();
-//                    atts.forEach(function (att) {
-//                        key += '+' + att
-//                    });
-//                }
-//                keys.push(key);
-//            });
-//        } else {
-//            var row = {};
-//            e.forEach(function (e2, i2) {
-//                row[keys[i2]] = e2;
-//            });
-//            output.push(row);
-//        }
-//    });
-//    return output;
-//}
-//load 3W data
+
+var settingCall = $.ajax({
+    type: 'GET',
+    url: 'https://proxy.hxlstandard.org/data/eEQ0SU.json',
+    dataType: 'json',
+})
+
 
 var dataCall = $.ajax({
     type: 'GET',
@@ -453,23 +488,36 @@ var geomCall = $.ajax({
     dataType: 'json',
 });
 
+var monthlyCall = $.ajax({
+    type: 'GET',
+    url: 'https://proxy.hxlstandard.org/data/lJu3PA.json',
+    dataType: 'json'
+})
+
 //when both ready construct 3W
 
-$.when(dataCall, geomCall).then(function (dataArgs, geomArgs) {
-    var data = dataArgs[0]; //hxlProxyToJSON(dataArgs[0]);
+$.when(settingCall, dataCall, monthlyCall, geomCall).then(function (settingsArgs, dataArgs, monthlyArgs, geomArgs) {
+    //date and metholodology generate
+    var settingsData = hxlProxyToJSON(settingsArgs[0]);
+    generateSettings(settingsData[0]['#indicator+last_update'], settingsData[0]['#indicator+methodology']);
+
+    //monthly data generate
+    var monthlyData = hxlProxyToJSON(monthlyArgs[0]);
+    monthlyData.forEach(function (element) {
+        monthlyMonths.push(element['#month']);
+        monthlyBeneficiaries.push(element['#beneficiaries']);
+        monthlyTransfer.push(element['#value']);
+
+    });
+
+
+    var data = dataArgs[0];
+    var monthlyData = monthlyArgs[0]
     var geom = geomArgs[0];
+
     geom.features.forEach(function (e) {
         e.properties[config.joinAttribute] = String(e.properties[config.joinAttribute]);
     });
+
     generate3WComponent(config, data, geom);
 });
-
-
-//var formatComma = d3.format(","),
-//    formatDecimal = d3.format(".1f"),
-//    formatDecimalComma = d3.format(",.2f"),
-//    formatSuffix = d3.format("s"),
-//    formatSuffixDecimal1 = d3.format(".1s"),
-//    formatSuffixDecimal2 = d3.format(".2s"),
-//    formatMoney = function(d) { return "$" + formatDecimalComma(d); },
-//    formatPercent = d3.format(",.2%");
