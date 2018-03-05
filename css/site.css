@@ -1,37 +1,45 @@
-#body {
-    font-size: 20px;
+body,
+h4,
+h6 {
+    font-family: sans-serif;
 }
 
-#title h3 {
-    font-family: Raleway;
+h1 {
+    font-size: 24px;
+
+}
+
+h4 {
     color: #999999;
-}
+    font-size: 19px;
 
-#link {
-    font-family: Raleway;
-    padding-left: 0px;
 }
 
 .dc-chart g.row text {
+    /*    fill: #4d4d4d;*/
     fill: #4d4d4d;
-    font-size: 1.2em;
-    font-family: Raleway;
+    font-size: 1.0em;
+    font-family: sans-serif;
 }
 
 #hdx-3W-what g.row text {
     fill: #4d4d4d;
-    font-size: 1.3em;
-    font-family: Raleway;
+    font-size: 1.0em;
+    font-family: sans-serif;
 }
 
 .dc-chart .pie-slice {
     fill: #4d4d4d;
-    font-family: Raleway;
+    font-family: sans-serif;
+    font-size: 1.0em;
+
+    /*    transform: rotate((d.startAngle + d.endAngle) / 2 * 180 / Math.PI)%360));*/
 }
+
 
 .dc-chart .axis.x text {
     fill: #4d4d4d;
-    font-family: Raleway;
+    font-family: sans-serif;
 }
 
 .dc-chart .axis.x path,
@@ -41,8 +49,10 @@
 }
 
 #hdx-3W-where {
-    height: 360px;
+    height: 400px;
     width: 100%;
+    margin-bottom: 10px;
+    margin-top: 10px;
 }
 
 #whoRegional {
@@ -67,18 +77,6 @@
 }
 
 
-/*
-#regionalCash svg g g.axis.y {
-    display: none;
-}
-*/
-
-#header {
-    border-bottom-color: #dddddd;
-    border-bottom-style: solid;
-    border-bottom-width: 1px;
-}
-
 #header2 {
     border-bottom-color: #dddddd;
     border-bottom-style: solid;
@@ -92,7 +90,7 @@
     border-bottom-style: solid;
     border-bottom-width: 1px;
     margin-bottom: 5px;
-    /*    margin-top: 10px;*/
+        margin-top: 10px;
 }
 
 .colheight {
@@ -116,63 +114,40 @@
     border-radius: 5px;
 }
 
-.col-md-3 p {
-    padding-left: 40px;
-}
-
-.col-xs-3 p {
-    padding-left: 40px;
-}
-
-#date {
-    text-align: right;
-    margin-top: 35px;
-}
 
 #reset {
     float: right;
-    margin-top: 5px;
+    margin-top: 25px;
 }
 
 .col-md-4 {
     color: #848484;
 }
 
-.col-md-6 {
-    color: #848484;
-}
 
 #numbers p {
     color: #03a9f4;
-    font-size: 30px;
-}
-
-h4 {
-    color: #999999;
-    font-family: Raleway;
-}
-
-#filters p {
-    text-align: justify;
-    font-family: Raleway;
-    font-size: 0.9em;
-    color: #999999;
+    font-size: 20px;
     padding-left: 0px;
-    padding-top: 10px;
-    width: 200px;
 }
 
-#dataTab {
-    overflow-y: auto;
-    height: 400px;
+#dateOfData {
+    color: #03a9f4;
+    font-size: 20px;
+    margin-top: 25px;
+
 }
 
-.table.table-condensed thead tr th {
+.entete{
+    margin-bottom: 95px;
+}
+
+.d3-tip {
+    padding: 5px;
+    background-color: white;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
     font-size: 14px;
-    color: #999999;
 }
 
-.table.table-condensed tr td {
-    font-size: 12px;
-    color: #4d4d4d;
-}
