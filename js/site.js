@@ -1,19 +1,19 @@
 var config = {
     data: "data/cash-october.json",
-    whoFieldName: "Organization",
-    whatFieldName: "Cluster",
-    whereFieldName: "DIS_CODE",
-    sumField: "Beneficiaries",
+    whoFieldName: "#org",
+    whatFieldName: "#sector",
+    whereFieldName: "#adm2+code",
+    sumField: "#beneficiary",
     geo: "data/Somalia_District_Polygon.json",
     joinAttribute: "DIS_CODE",
     nameAttribute: "DIST_NAME",
     color: "#3B88C0",
-    mechanismField: "Delivery mechanism",
-    conditonalityField: "Conditionality",
-    restrictionField: "Restriction",
-    ruralField: "RURAL/URBAN",
-    transferValue: "Beneficiaries",
-    estimatedField: "Estimated"
+    mechanismField: "#indicator+mechanism",
+    conditonalityField: "#indicator+conditionality",
+    restrictionField: "#indicator+restriction",
+    ruralField: "#loc+type",
+    transferValue: "#beneficiary",
+    estimatedField: "#indicator+amount+total"
 };
 
 function hxlProxyToJSON(input, headers) {
@@ -53,6 +53,9 @@ var monthlyMonths = ['x'],
     monthlyBeneficiaries = ['Beneficiaries'],
     monthlyTransfer = ['Transfer value'];
 
+function checkIntData(d){
+    return (isNaN(parseInt(d)) || parseInt(d)<0) ? 0 : parseInt(d);
+}
 
 function generate3WComponent(config, data, geom) {
 
@@ -78,8 +81,13 @@ function generate3WComponent(config, data, geom) {
 
     var cf = crossfilter(data);
 
+    data.forEach( function(element) {
+        element['#value'] = checkIntData(element['#value']);
+        element['#beneficiary'] = checkIntData(element['#beneficiary']);
+    });
+
     var whoRegionalDim = cf.dimension(function (d) {
-        return d["Region"];
+        return d["#adm1+name"];
     });
 
     var whoDimension = cf.dimension(function (d) {
@@ -146,23 +154,25 @@ function generate3WComponent(config, data, geom) {
     var gp = cf.groupAll().reduce(
         function (p, v) {
             p.peopleAssisted += +v[config.sumField];
-            p.amountTransfered += +v["Estimated"];
+            // p.amountTransfered += +v["Estimated"];
+            p.amountTransfered += +v[config.estimatedField];
 
-            if (v["Organization"] in p.orgas)
-                p.orgas[v["Organization"]]++;
+
+            if (v[config.whoFieldName] in p.orgas)
+                p.orgas[v[config.whoFieldName]]++;
             else {
-                p.orgas[v["Organization"]] = 1;
+                p.orgas[v[config.whoFieldName]] = 1;
                 p.numOrgs++;
             }
             return p;
         },
         function (p, v) {
             p.peopleAssisted -= +v[config.sumField];
-            p.amountTransfered -= +v["Estimated"];
+            p.amountTransfered -= +v[config.estimatedField];
 
-            p.orgas[v["Organization"]]--;
-            if (p.orgas[v["Organization"]] == 0) {
-                delete p.orgas[v["Organization"]];
+            p.orgas[v[config.whoFieldName]]--;
+            if (p.orgas[v[config.whoFieldName]] == 0) {
+                delete p.orgas[v[config.whoFieldName]];
                 p.numOrgs--;
             }
 
@@ -287,7 +297,7 @@ function generate3WComponent(config, data, geom) {
         .colorAccessor(function (d, i) {
             return 0;
         })
-        .xAxis().ticks(0);
+        .xAxis().ticks(5);
 
     whatChart.width($('#hxd-3W-what').width()).height(350)
         .dimension(whatDimension)
@@ -301,7 +311,7 @@ function generate3WComponent(config, data, geom) {
         .colorAccessor(function (d) {
             return 0;
         })
-        .xAxis().ticks(0);
+        .xAxis().ticks(5);
 
 
     whoRegional.width(585).height(450)
@@ -316,7 +326,7 @@ function generate3WComponent(config, data, geom) {
         .colorAccessor(function (d) {
             return 0;
         })
-        .xAxis().ticks(0);
+        .xAxis().ticks(5);
 
 
 
@@ -399,40 +409,6 @@ function generate3WComponent(config, data, geom) {
     d3.selectAll('g.pie-slice').call(slicetip);
     d3.selectAll('g.pie-slice').on('mouseover', slicetip.show).on('mouseout', slicetip.hide);
 
-    //monthly c3 chart
-
-    var monthlyChart = c3.generate({
-        bindto: '#monthlyChart',
-        size: {
-            height: 350
-        },
-        data: {
-            x: 'x',
-            columns: [monthlyMonths, monthlyBeneficiaries, monthlyTransfer]
-        },
-        axis: {
-            x: {
-                type: 'timeseries',
-                localtime: false,
-                tick: {
-                    format: '%b %Y'
-                }
-            },
-            y: {
-                tick: {
-                    format: d3.format('.2s')
-                }
-            }
-        },
-        tooltip: {
-            format: {
-                value: d3.format(',')
-            }
-        },
-        padding: {
-            right: 35
-        }
-    });
 
     var map = whereChart.map();
 
@@ -466,17 +442,49 @@ function generate3WComponent(config, data, geom) {
 
 }
 
+function generateLineCharts(data, bindTo){
+   c3.generate({
+        bindto: bindTo,
+        size: {
+            height: 200
+        },
+        data: {
+            x: 'x',
+            columns: data //[monthlyMonths, monthlyBeneficiaries, monthlyTransfer]
+        },
+        axis: {
+            x: {
+                type: 'timeseries',
+                localtime: false,
+                tick: {
+                    format: '%b %Y'
+                }
+            },
+            y: {
+                tick: {
+                    format: d3.format('.2s')
+                }
+            }
+        },
+        tooltip: {
+            format: {
+                value: d3.format(',')
+            }
+        }
+
+    });
+} //fin generateLineCharts
 
 var settingCall = $.ajax({
     type: 'GET',
-    url: 'https://proxy.hxlstandard.org/data/eEQ0SU.json',
+    url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%3Fusp%3Dsharing',
     dataType: 'json',
 })
 
 
 var dataCall = $.ajax({
     type: 'GET',
-    url: config.data,
+    url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D251024910',
     dataType: 'json',
 });
 
@@ -490,7 +498,7 @@ var geomCall = $.ajax({
 
 var monthlyCall = $.ajax({
     type: 'GET',
-    url: 'https://proxy.hxlstandard.org/data/lJu3PA.json',
+    url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D1868352423',
     dataType: 'json'
 })
 
@@ -503,6 +511,7 @@ $.when(settingCall, dataCall, monthlyCall, geomCall).then(function (settingsArgs
 
     //monthly data generate
     var monthlyData = hxlProxyToJSON(monthlyArgs[0]);
+    
     monthlyData.forEach(function (element) {
         monthlyMonths.push(element['#month']);
         monthlyBeneficiaries.push(element['#beneficiaries']);
@@ -510,9 +519,12 @@ $.when(settingCall, dataCall, monthlyCall, geomCall).then(function (settingsArgs
 
     });
 
+    generateLineCharts([monthlyMonths, monthlyBeneficiaries],'#yearlyChart');
+    generateLineCharts([monthlyMonths, monthlyTransfer], '#monthlyChart');
 
-    var data = dataArgs[0];
-    var monthlyData = monthlyArgs[0]
+    var data = hxlProxyToJSON(dataArgs[0]);
+
+    // var monthlyData = monthlyArgs[0]
     var geom = geomArgs[0];
 
     geom.features.forEach(function (e) {

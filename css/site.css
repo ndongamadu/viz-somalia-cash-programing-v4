@@ -1,5 +1,6 @@
 body,
 h4,
+h5.
 h6 {
     font-family: sans-serif;
 }
@@ -10,10 +11,9 @@ h1 {
 }
 
 h4 {
-    color: #999999;
     font-size: 19px;
-
 }
+
 
 .dc-chart g.row text {
     /*    fill: #4d4d4d;*/
@@ -64,7 +64,7 @@ h4 {
     padding-bottom: 10px;
 }
 
-#hdx-3W-who svg g g.axis {
+/*#hdx-3W-who svg g g.axis {
     display: none;
 }
 
@@ -75,32 +75,17 @@ h4 {
 #regionalCash svg g g.axis {
     display: none;
 }
-
-
-#header2 {
-    border-bottom-color: #dddddd;
-    border-bottom-style: solid;
-    border-bottom-width: 1px;
-    margin-bottom: 15px;
-    /*    margin-top: 30px;*/
+*/
+.header{
+    border-bottom: 1px solid #999;
+    padding-bottom: 5px;
 }
 
-#header3 {
-    border-bottom-color: #dddddd;
-    border-bottom-style: solid;
-    border-bottom-width: 1px;
-    margin-bottom: 5px;
-        margin-top: 10px;
+hr{
+    border-top-color: #999;
+    margin: 10px 0;
 }
 
-.colheight {
-    height: 450px;
-}
-
-.removepadding {
-    padding-right: 0px;
-    padding-left: 0px;
-}
 
 .hdx-3w-chart {
     width: 100%;
@@ -126,21 +111,11 @@ h4 {
 
 
 #numbers p {
-    color: #03a9f4;
-    font-size: 20px;
+    /*color: #03a9f4;*/
+    font-size: 24px;
     padding-left: 0px;
 }
 
-#dateOfData {
-    color: #03a9f4;
-    font-size: 20px;
-    margin-top: 25px;
-
-}
-
-.entete{
-    margin-bottom: 95px;
-}
 
 .d3-tip {
     padding: 5px;
