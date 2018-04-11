@@ -23,107 +23,143 @@
     <script src="js/c3.min.js"></script>
 </head>
 <body>
+    <div class="loader" id="loader"></div>
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
-                <h1 class="header">Somalia Cash Programming activities</h1> 
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <h1 class="header">Cash Based Programming in Somalia</h1> 
             </div>
-            <div class="col-md-8">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            <div class="col-md-9 col-sm-12 col-xs-12">
+                <span class="justify">This interactive datavisualization shows the cash-based assistance reported by humanitarian agencies in Somalia. Cash-based assistance refers to all programs where cash (or vouchers for goods or services) is directly provided to beneficiaries. In the context of humanitarian assistance, the term is used to refer to the provision of cash transfers or vouchers given to individuals, household or community recipients. The data used in the datavisualization is collected monthly by the sectoral clusters from operational partners on ongoing activities, and is compiled by UNOCHA. While OCHA makes every effort to ensure all cash based actors are represented there may be other cash activities ongoing not captured in this data.
+                </span>
             </div>
-            <div class="col-md-1">
-                <h5>Month</h5>
-                <select name="monthSelection" class="monthSelectionList">
-                    <option value="april">April</option>
-                    <option value="may">May</option>
-                    <option value="may">November</option>
+            <div class="col-md-1 col-sm-4 col-xs-4">
+                <h4>Month</h4>
+                <select class="monthSelectionList">
+                    <!-- <option value="January">January</option>
+                    <option value="February">February</option>
+                    <option value="March">March</option>
+                    <option value="April">April</option> -->
+                    <option value="May">May</option>
+                    <option value="June">June</option>
+                    <option value="July">July</option>
+                    <option value="August">August</option>
+                    <!-- <option value="September">September</option> -->
+                    <option value="October">October</option>
+                    <!-- <option value="November">November</option>
+                    <option value="December">December</option> -->
                 </select>
             </div>
-            <div class="col-md-1">
-                <h5>Year</h5>
-                <select name="yearSelection" class="yearSelectionList">
+            <div class="col-md-1 col-sm-4 col-xs-4">
+                <h4>Year</h4>
+                <select class="yearSelectionList">
                     <option value="2017">2017</option>
-                    <option value="2018">2018</option>
+                    <!-- <option value="2018">2018</option> -->
                 </select>
             </div>
-            <div class="col-md-1 pull-right">
+            <div class="col-md-1 col-sm-4 col-xs-4 pull-right">
             <h5><a class="reset btn btn-primary btn-sm" id="reset" href="javascript:dc.filterAll();dc.redrawAll();">Reset filters</a></h5>
             </div>
         </div>
         <hr>
         <div class="row">
-            <div class="col-md-2 col-sm-6 col-xs-12" id="numbers">
+            <div class="col-md-2 col-sm-6 col-xs-6" id="numbers">
                 <p id="peopleAssisted"></p>
-                <h5 class="header">People assisted</h5>
-                <span class="small">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</span>
+                <h4 class="header">People assisted</h4>
+                <span class="small">People assisted is the sum of people receiving cash-based assistance across all sectors, in the selected month.(<a href="#more-people-assisted">See more</a>)</span>
             </div>
-            <div class="col-md-2 col-sm-6 col-xs-12" id="numbers">
+            <div class="col-md-2 col-sm-6 col-xs-6" id="numbers">
                 <p id="amountTransfered"></p>
-                <h5 class="header">Value transferred</h5>
-                <span class="small">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</span>
+                <h4 class="header">Value transferred</h4>
+                <span class="small">Value transferred is the sum of the USD value of the cash-based assistance transferred to people in the selected month.(<a href="#more-people-assisted">See more</a>)</span>
             </div> 
-            <div class="col-md-4">
+            <div class="col-md-4 col-sm-6 col-xs-12">
                 <div id="yearlyChart"></div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 col-sm-6 col-xs-12">
                 <div id="monthlyChart"></div>   
             </div>   
         </div>  
         <hr>
-        <div class="row">
-            <div class="col-md-3 col-sm-6" id="filters">
-                <h5>Conditionality</h5>
-                <div id="filterConditionality"></div>
+        <div class="row monthly-viz-container">
+            <div class="row">
+                <div class="col-md-3 col-sm-6 col-xs-12" id="filters">
+                    <h4><a href="#more-conditionaly">Conditionality</a></h4>
+                    <div id="filterConditionality"></div>
+                </div>
+                <div class="col-md-3 col-sm-6 col-xs-12" id="filters">
+                    <h4><a href="#more-restriction">Restriction</a></h4>
+                    <div id="filterRestriction"></div>
+                </div>
+                    <div class="col-md-3 col-sm-6 col-xs-12" id="filters">
+                    <h4><a href="#more-area">Area</a></h4>
+                    <div id="filterArea"></div>
+                </div>
+                <div class="col-md-3 col-sm-6 col-xs-12" id="filters">
+                    <h4><a href="#more-delivery-mechanism">Delivery mechanism</a></h4>
+                    <div id="filterMechanism"></div>
+                </div>
 
             </div>
-            <div class="col-md-3 col-sm-6" id="filters">
-                <h5>Restriction</h5>
-                <div id="filterRestriction"></div>
+            <div class="row">
+                <div class="col-md-6 col-sm-12 col-xs-12">
+                    <h4>Cash transfers by region (No. individuals)</h4>
+                    <div id="regionalCash"></div>
+                </div>
+                <div class="col-md-6 col-sm-12 col-xs-12">
+                    <div class="row">
+                        <h4>Cash transfer by district</h4>
+                        <div id="hdx-3W-where" class="hdx-3w-chart"></div>
+                        <p class="small">The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.</p>
+                    </div>
+                </div>
             </div>
-                <div class="col-md-3 col-sm-6" id="filters">
-                <h5>Area</h5>
-                <div id="filterArea"></div>
-            </div>
-            <div class="col-md-3 col-sm-6" id="filters">
-                <h5>Delivery mechanism</h5>
-                <div id="filterMechanism"></div>
-            </div>
+            <div class="row">
+                <div class="col-md-6 col-sm-12 col-xs-12">
+                    <h4>Top 15 cash transfer by partner (No. individuals)</h4>
+                    <div id="hdx-3W-who" class="hdx-3w-chart"></div>
+                </div>
 
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <h5>Cash transfers by region (No. individuals)</h5>
-                <div id="regionalCash"></div>
+                <div class="col-md-6 col-sm-12 col-xs-12">
+                    <div class="row">
+                        <h4>Cash transfer by cluster (No. individuals)</h4>
+                        <div id="hdx-3W-what" class="hdx-3w-chart"></div>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-6">
-                <div class="row">
-                    <h5>Cash transfer by district</h5>
-                    <div id="hdx-3W-where" class="hdx-3w-chart"></div>
-                    <p class="small">The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.</p>
+        
+            <hr>
+            <div class="row" class="infos">
+                <div class="col-md-6 col-sm-12 col-xs-12">
+                    <h5><a id="more-people-assisted">People assisted</a></h5>
+                    <p class="small justify">People assisted is the sum of people receiving cash-based assistance across all sectors, in the selected month. It sums the reported number of recipients from all clusters, and includes both cash and vouchers. If a person receives cash-based assistance from more than one sector (for instance, a water voucher and a multi-purpose cash grant), that person will be counted more than once. Hence, there is some potential for double-counting, although this is estimated to be relatively limited.
+                    </p>
+                </div>
+                <div class="col-md-6 col-sm-12 col-xs-12">
+                    <h5><a id="more-transfer-value">Value transferred</a></h5>
+                    <p class="small justify">Value transferred is the sum of the USD value of the cash-based assistance transferred to people in the selected month. It is calculated by multiplying the value transferred to each household multiplied by all assisted households, and summed across agencies and locations.</p>
+                </div>
+            </div>
+            <div class="row" class="infos">
+                <div class="col-md-3 col-sm-6 col-xs-6">
+                    <h5><a id="more-conditionaly">Conditionality</a></h5>
+                    <p class="small justify">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </div>
+                <div class="col-md-3 col-sm-6 col-xs-6">
+                    <h5><a id="more-restriction">Restriction</a></h5>
+                    <p class="small justify">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </div>
+                <div class="col-md-3 col-sm-6 col-xs-6">
+                    <h5><a id="more-area">Area</a></h5>
+                    <p class="small justify">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+                </div>
+                <div class="col-md-3 col-sm-6 col-xs-6">
+                    <h5><a id="more-delivery-mechanism">Delivery mechanism</a></h5>
+                    <p class="small justify">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-6">
-                <h5>Top 15 cash transfer by partner (No. individuals)</h5>
-                <div id="hdx-3W-who" class="hdx-3w-chart"></div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="row">
-                    <h5>Cash transfer by cluster (No. individuals)</h5>
-                    <div id="hdx-3W-what" class="hdx-3w-chart"></div>
-                </div>
-            </div>
-        </div>
-<!--         <div class="row">
-            <div id="header3" class="col-md-12"></div>
-        </div>
-        <div class="row" id="methodology">
-            <h4>Methodology</h4>
-            <p></p>
-        </div> -->
-    </div>
+    </div> 
     <script src="js/site.js"></script>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->

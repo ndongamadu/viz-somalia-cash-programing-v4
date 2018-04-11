@@ -1,5 +1,7 @@
 var config = {
-    data: "data/cash-october.json",
+    lastUpdateMonth: "May",
+    lastUpdateYear: "2017",
+    lastDataURL: "https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D251024910",
     whoFieldName: "#org",
     whatFieldName: "#sector",
     whereFieldName: "#adm2+code",
@@ -15,6 +17,14 @@ var config = {
     transferValue: "#beneficiary",
     estimatedField: "#indicator+amount+total"
 };
+
+$('.monthSelectionList option').filter(function(){
+    return $(this).text()== config.lastUpdateMonth;
+}).prop('selected', true);
+
+$('.yearSelectionList option').filter(function(){
+    return $(this).text()== config.lastUpdateYear;
+}).prop('selected', true);
 
 function hxlProxyToJSON(input, headers) {
     var output = [];
@@ -44,20 +54,30 @@ function hxlProxyToJSON(input, headers) {
     return output;
 }
 
-function generateSettings(dateOfData, metadata) {
-    $('#dateOfData a').text(dateOfData);
-    $('#methodology p').text(metadata);
-}
+var formatComma = d3.format(',');
+var formatDecimalComma = d3.format(",.0f");
+
+var formatDecimal = function (d) {
+    ret = d3.format(".3f");
+    return "$ " + ret(d);
+};
+var formatDecimalAVG = function (d) {
+    ret = d3.format(".1f");
+    return "$ " + ret(d);
+};
+var formatMoney = function (d) {
+    return "$ " + formatDecimalComma(d);
+};
 
 var monthlyMonths = ['x'],
-    monthlyBeneficiaries = ['Beneficiaries'],
-    monthlyTransfer = ['Transfer value'];
+    monthlyBeneficiaries = ['Beneficiaries trends'],
+    monthlyTransfer = ['Transfer value trends'];
 
 function checkIntData(d){
     return (isNaN(parseInt(d)) || parseInt(d)<0) ? 0 : parseInt(d);
-}
+};
 
-function generate3WComponent(config, data, geom) {
+function generate3WComponent(data, geom) {
 
     var lookup = genLookup(geom, config);
 
@@ -71,13 +91,6 @@ function generate3WComponent(config, data, geom) {
     var filtercondPie = dc.pieChart('#filterConditionality');
     var filterRestPie = dc.pieChart('#filterRestriction');
     var filterRuralUrban = dc.pieChart('#filterArea');
-
-
-
-    var peopleAssisted = dc.numberDisplay('#peopleAssisted');
-    var amountTransfered = dc.numberDisplay('#amountTransfered');
-    var numberOrgs = dc.numberDisplay('#numberOrgs');
-    //var numberClusters = dc.numberDisplay('#numberClusters');
 
     var cf = crossfilter(data);
 
@@ -93,8 +106,6 @@ function generate3WComponent(config, data, geom) {
     var whoDimension = cf.dimension(function (d) {
         return d[config.whoFieldName];
     });
-
-
 
     var whatDimension = cf.dimension(function (d) {
         return d[config.whatFieldName];
@@ -149,46 +160,6 @@ function generate3WComponent(config, data, geom) {
         return parseInt(d[config.sumField]);
     });
 
-
-
-    var gp = cf.groupAll().reduce(
-        function (p, v) {
-            p.peopleAssisted += +v[config.sumField];
-            // p.amountTransfered += +v["Estimated"];
-            p.amountTransfered += +v[config.estimatedField];
-
-
-            if (v[config.whoFieldName] in p.orgas)
-                p.orgas[v[config.whoFieldName]]++;
-            else {
-                p.orgas[v[config.whoFieldName]] = 1;
-                p.numOrgs++;
-            }
-            return p;
-        },
-        function (p, v) {
-            p.peopleAssisted -= +v[config.sumField];
-            p.amountTransfered -= +v[config.estimatedField];
-
-            p.orgas[v[config.whoFieldName]]--;
-            if (p.orgas[v[config.whoFieldName]] == 0) {
-                delete p.orgas[v[config.whoFieldName]];
-                p.numOrgs--;
-            }
-
-            return p;
-        },
-        function () {
-            return {
-                peopleAssisted: 0,
-                amountTransfered: 0,
-                numOrgs: 0,
-                orgas: {}
-            };
-
-        }
-    );
-
     var all = cf.groupAll();
     //tooltip
     var rowtip = d3.tip().attr('class', 'd3-tip').html(function (d) {
@@ -200,21 +171,6 @@ function generate3WComponent(config, data, geom) {
     var slicetip = d3.tip().attr('class', 'd3-tip').html(function (d) {
         return d.data.key + ': ' + d3.format('0,000')(d.value);
     });
-
-    var formatComma = d3.format(',');
-    var formatDecimalComma = d3.format(",.0f");
-
-    var formatDecimal = function (d) {
-        ret = d3.format(".3f");
-        return "$ " + ret(d);
-    };
-    var formatDecimalAVG = function (d) {
-        ret = d3.format(".1f");
-        return "$ " + ret(d);
-    };
-    var formatMoney = function (d) {
-        return "$ " + formatDecimalComma(d);
-    };
 
     var colorScale = d3.scale.ordinal().range(['#DDDDDD', '#A7C1D3', '#71A5CA', '#73A9D9', '#8CBCD2', '#3B88C0', '#056CB6']);
 
@@ -328,12 +284,10 @@ function generate3WComponent(config, data, geom) {
         })
         .xAxis().ticks(5);
 
-
-
     dc.dataCount('#count-info')
         .dimension(cf)
         .group(all);
-
+    
     whereChart.width($('#hxd-3W-where').width()).height(400)
         .dimension(whereDimension)
         .group(whereGroup)
@@ -363,44 +317,8 @@ function generate3WComponent(config, data, geom) {
         })
         .renderPopup(true);
 
-
-
-    var peopleA = function (d) {
-        return d.peopleAssisted;
-    };
-
-    var amountT = function (d) {
-        return d.amountTransfered;
-    };
-
-    var numO = function (d) {
-        return d.numOrgs;
-    };
-
-    var numAvg = function (d) {
-        return d.avg;
-    };
-
-    peopleAssisted.group(gp)
-        .valueAccessor(peopleA)
-        .html({
-            none: "<span style=\"color:#03a9f4; font-size: 26px;\">unavailable</span>"
-        })
-        .formatNumber(formatDecimalComma);
-    //        .formatNumber(formatComma);
-
-    amountTransfered.group(gp)
-        .valueAccessor(amountT)
-        .html({
-            none: "<span style=\"color:#03a9f4; font-size: 26px;\">unavailable</span>"
-        })
-        .formatNumber(formatMoney);
-
-    numberOrgs.group(gp)
-        .valueAccessor(numO)
-        .formatNumber(formatDecimalComma);
-
-
+    $('.monthly-viz-container').show();
+    $('.loader').hide()
     dc.renderAll();
 
     d3.selectAll('g.row').call(rowtip);
@@ -409,15 +327,8 @@ function generate3WComponent(config, data, geom) {
     d3.selectAll('g.pie-slice').call(slicetip);
     d3.selectAll('g.pie-slice').on('mouseover', slicetip.show).on('mouseout', slicetip.hide);
 
-
     var map = whereChart.map();
-
     zoomToGeom(geom);
-
-
-    var g = d3.selectAll('#hdx-3W-who').select('svg').append('g');
-
-
 
     function zoomToGeom(geom) {
         var bounds = d3.geo.bounds(geom);
@@ -437,10 +348,9 @@ function generate3WComponent(config, data, geom) {
 
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1);
-    }
+    } 
 
-
-}
+}// gin generate3WComponent
 
 function generateLineCharts(data, bindTo){
    c3.generate({
@@ -457,11 +367,13 @@ function generateLineCharts(data, bindTo){
                 type: 'timeseries',
                 localtime: false,
                 tick: {
+                    count:6,
                     format: '%b %Y'
                 }
             },
             y: {
                 tick: {
+                    count:6,
                     format: d3.format('.2s')
                 }
             }
@@ -473,28 +385,51 @@ function generateLineCharts(data, bindTo){
         }
 
     });
+
 } //fin generateLineCharts
 
-var settingCall = $.ajax({
-    type: 'GET',
-    url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%3Fusp%3Dsharing',
-    dataType: 'json',
-})
+var datesDic = {
+        'January':'1',
+        'February':'2',
+        'March':'3',
+        'April':'4',
+        'May':'5',
+        'June':'6',
+        'July':'7',
+        'August':'8',
+        'September':'9',
+        'October':'10',
+        'November':'11',
+        'December':'12'
+};
 
+function generateKeyFigures (mm, yy) {
+    var id = String(yy)+datesDic[mm];
+    $("#peopleAssisted").text(formatComma(parseFloat(globalMonthlyData[id].beneficiaries)));
+    $("#amountTransfered").text(formatMoney(parseFloat(globalMonthlyData[id].value)));
+    
+} //fin generateKeyFigures
 
-var dataCall = $.ajax({
-    type: 'GET',
-    url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D251024910',
-    dataType: 'json',
+$('.monthSelectionList').on('change', function(e){
+    var month = $('.monthSelectionList').val();
+    var year = $('.yearSelectionList').val();
+    generateKeyFigures(month, year);
+
+    var id = String(year)+datesDic[month];
+    updateMonthlyData(globalMonthlyData[id].link);
+
 });
+// since we have 2018 data
 
-//load geometry
+// $('.yearSelectionList').on('change', function(e){
+//     var month = $('.monthSelectionList').val();
+//     var year = $('.yearSelectionList').val();
+//     generateKeyFigures(month, year);
 
-var geomCall = $.ajax({
-    type: 'GET',
-    url: config.geo,
-    dataType: 'json',
-});
+//     var id = String(year)+datesDic[month];
+//     updateMonthlyData(globalMonthlyData[id].link);
+
+// });
 
 var monthlyCall = $.ajax({
     type: 'GET',
@@ -502,34 +437,52 @@ var monthlyCall = $.ajax({
     dataType: 'json'
 })
 
-//when both ready construct 3W
+// donnees de la feuille excel monthly_data
+var globalMonthlyData = {};
 
-$.when(settingCall, dataCall, monthlyCall, geomCall).then(function (settingsArgs, dataArgs, monthlyArgs, geomArgs) {
-    //date and metholodology generate
-    var settingsData = hxlProxyToJSON(settingsArgs[0]);
-    generateSettings(settingsData[0]['#indicator+last_update'], settingsData[0]['#indicator+methodology']);
+$.when(monthlyCall).then(function(monthlyArgs){
 
-    //monthly data generate
-    var monthlyData = hxlProxyToJSON(monthlyArgs[0]);
-    
+
+    var monthlyData = hxlProxyToJSON(monthlyArgs);
     monthlyData.forEach(function (element) {
         monthlyMonths.push(element['#month']);
         monthlyBeneficiaries.push(element['#beneficiaries']);
         monthlyTransfer.push(element['#value']);
+        globalMonthlyData[element['#meta+code']] = {'date':element['#month'],'value':element['#value'],'beneficiaries':element['#beneficiaries'],'link':element['#meta+link']};
 
     });
-
     generateLineCharts([monthlyMonths, monthlyBeneficiaries],'#yearlyChart');
     generateLineCharts([monthlyMonths, monthlyTransfer], '#monthlyChart');
+    generateKeyFigures(config.lastUpdateMonth, config.lastUpdateYear);
+    updateMonthlyData(config.lastDataURL);
 
-    var data = hxlProxyToJSON(dataArgs[0]);
+});
 
-    // var monthlyData = monthlyArgs[0]
-    var geom = geomArgs[0];
-
-    geom.features.forEach(function (e) {
-        e.properties[config.joinAttribute] = String(e.properties[config.joinAttribute]);
+function updateMonthlyData (dataURL, fonction) {
+    $('.monthly-viz-container').hide();
+    $('.loader').show();
+    var geomCall = $.ajax({
+        type: 'GET',
+        url: config.geo,
+        dataType: 'json',
     });
 
-    generate3WComponent(config, data, geom);
-});
+    var monthlyCall = $.ajax({
+        type: 'GET',
+        url: dataURL,
+        dataType: 'json'
+    });
+
+    $.when(monthlyCall, geomCall).then(function (dataArgs, geomArgs) {
+
+        var data = hxlProxyToJSON(dataArgs[0]);
+        var geom = geomArgs[0];
+        geom.features.forEach(function (e) {
+            e.properties[config.joinAttribute] = String(e.properties[config.joinAttribute]);
+        });
+        generate3WComponent(data, geom);
+    });
+
+} // fin updateMonthlyData
+
+
