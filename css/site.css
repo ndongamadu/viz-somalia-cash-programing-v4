@@ -1,45 +1,37 @@
-body,
-h4,
-h5.
-h6 {
-    font-family: sans-serif;
+body, h1, h2, h3, h4, h5, h6 {
+    font-family: 'Source Sans Pro', sans-serif;
 }
 
 h1 {
     font-size: 24px;
-
 }
 
 h4 {
+    color: #222;
     font-size: 19px;
 }
+
 
 
 .dc-chart g.row text {
     /*    fill: #4d4d4d;*/
     fill: #4d4d4d;
     font-size: 1.0em;
-    font-family: sans-serif;
 }
 
 #hdx-3W-what g.row text {
     fill: #4d4d4d;
     font-size: 1.0em;
-    font-family: sans-serif;
 }
 
 .dc-chart .pie-slice {
     fill: #4d4d4d;
-    font-family: sans-serif;
     font-size: 1.0em;
 
-    /*    transform: rotate((d.startAngle + d.endAngle) / 2 * 180 / Math.PI)%360));*/
 }
-
 
 .dc-chart .axis.x text {
     fill: #4d4d4d;
-    font-family: sans-serif;
 }
 
 .dc-chart .axis.x path,
@@ -64,18 +56,6 @@ h4 {
     padding-bottom: 10px;
 }
 
-/*#hdx-3W-who svg g g.axis {
-    display: none;
-}
-
-#hdx-3W-what svg g g.axis {
-    display: none;
-}
-
-#regionalCash svg g g.axis {
-    display: none;
-}
-*/
 .header{
     border-bottom: 1px solid #999;
     padding-bottom: 5px;
@@ -99,7 +79,9 @@ hr{
     border-radius: 5px;
 }
 
-
+.monthly-viz-container {
+    display: none;
+}
 #reset {
     float: right;
     margin-top: 25px;
@@ -112,10 +94,17 @@ hr{
 
 #numbers p {
     /*color: #03a9f4;*/
-    font-size: 24px;
+    font-size: 22px;
     padding-left: 0px;
 }
 
+#filters a {
+    color: #222;
+}
+
+.infos p{
+    font-size: 20px;
+}
 
 .d3-tip {
     padding: 5px;
@@ -126,3 +115,20 @@ hr{
     font-size: 14px;
 }
 
+.loader {
+    animation: spin 2s linear infinite;
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #3498db; /* Blue */
+    border-radius: 50%;
+    height: 70px;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    width: 70px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

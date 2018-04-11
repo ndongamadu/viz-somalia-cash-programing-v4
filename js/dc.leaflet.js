@@ -1,9 +1,11 @@
 /* global dc, L */
+// this is customized to handle Map contain already initialized error 
+var _map;
 dc.leafletChart = function (_chart) {
     "use strict";
     _chart = dc.baseChart(_chart);
-
-    var _map;
+    //uncomment here
+    // var _map;
 
     var _mapOptions = false;
     var _defaultCenter = false;
@@ -16,6 +18,11 @@ dc.leafletChart = function (_chart) {
     };
 
     _chart._doRender = function () {
+        //delete here
+        if (_map != undefined) {
+           _map.remove();
+        }
+
         _map = L.map(_chart.root().node(), _mapOptions);
         if (_defaultCenter && _defaultZoom) {
             _map.setView(_chart.toLocArray(_defaultCenter), _defaultZoom);
@@ -591,6 +598,7 @@ dc.leafletMarkerChart = function (parent, chartGroup) {
 
 dc.leafletChoroplethChart = function (parent, chartGroup) {
     "use strict";
+
     var _chart = dc.colorChart(dc.leafletChart({}));
 
     var _geojsonLayer = false;
@@ -607,6 +615,8 @@ dc.leafletChoroplethChart = function (parent, chartGroup) {
         'fillOpacity': 0,
         'weight': 1
     };
+
+
 
     var _featureKey = function (feature) {
         return feature.key;
@@ -667,7 +677,8 @@ dc.leafletChoroplethChart = function (parent, chartGroup) {
             };
 
         _info.addTo(_chart.map());
-                
+        
+
         _chart.map().addLayer(_geojsonLayer);
     };
 
