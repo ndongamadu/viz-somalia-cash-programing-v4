@@ -1,7 +1,9 @@
 var config = {
+    mostUpdatedCode: "0",
     lastUpdateMonth: "May",
     lastUpdateYear: "2017",
-    lastDataURL: "https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D251024910",
+    // lastDataURL: "https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D251024910",
+    lastDataURL:'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D1685091410',
     whoFieldName: "#org",
     whatFieldName: "#sector",
     whereFieldName: "#adm2+code",
@@ -18,12 +20,84 @@ var config = {
     estimatedField: "#indicator+amount+total"
 };
 
+var globalMonthlyData = {},
+    cashData,
+    geom,
+    settings = {};
+
+var monthlyMonths = ['x'],
+    monthlyBeneficiaries = ['Beneficiaries trends'],
+    monthlyTransfer = ['Transfer value trends'];
+
+function updateSelectionMonthYear (mm, yy) {
+
+} // end of updateSelectionMonthYear
+
+var initSettings = (function(){
+    $.ajax({
+        type: 'GET',
+        url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D0&force=on',
+        format: 'json',
+        async: false,
+        success: function(args){
+            var dataSettings = hxlProxyToJSON(args);
+            dataSettings.forEach( function(element) {
+                settings[element['#meta+code']] = {'month':element['#date+month+name'],'year':element['#date+year'],'value':element['#value'],'beneficiaries':element['#beneficiaries'],'link':element['#meta+link']};
+                monthlyMonths.push(element['#date+month']);
+                monthlyBeneficiaries.push(element['#beneficiaries']);
+                monthlyTransfer.push(element['#value']);
+                //globalMonthlyData[element['#meta+code']] = {'date':element['#month'],'link':element['#meta+link']};
+            });
+        }
+    })
+
+})();
+initConfig();
+initCashData(config.lastDataURL);
+
+function initConfig() {
+    var bigger = 1;
+
+    for (key in settings){
+        var current = parseFloat(key);
+        current >= bigger ?  bigger = current : '';
+    } 
+    if (bigger =='undefined') {
+        config.mostUpdatedCode = 201710 ;
+        config.lastDataURL = 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D1685091410' ;
+    } else {
+        config.mostUpdatedCode = bigger ;
+        config.lastDataURL = settings[bigger].link ;
+        config.lastUpdateMonth = settings[bigger].month ;
+        config.lastUpdateYear = settings[bigger].year ;
+    }
+    
+} //end of configLastDataCode
+
+function initCashData(dataLink) {
+    var dataCash = (function(){
+    var a;
+    $.ajax({
+        type: 'GET',
+        url: dataLink,
+        format: 'json',
+        async: false,
+        success: function(dataArgs){
+            a = hxlProxyToJSON(dataArgs);
+        }
+    });
+    return a;
+    })();
+    cashData = crossfilter (dataCash); 
+
+} //end of initCashData
+
 $('.monthSelectionList option').filter(function(){
-    return $(this).text()== config.lastUpdateMonth;
+    return $(this).text() == config.lastUpdateMonth;
 }).prop('selected', true);
 
 $('.yearSelectionList option').filter(function(){
-    return $(this).text()== config.lastUpdateYear;
+    return $(this).text() == config.lastUpdateYear;
 }).prop('selected', true);
 
 function hxlProxyToJSON(input, headers) {
@@ -54,6 +128,20 @@ function hxlProxyToJSON(input, headers) {
     return output;
 }
 
+function print_filter(filter) {
+    var f = eval(filter);
+    if (typeof (f.length) != "undefined") {} else {}
+    if (typeof (f.top) != "undefined") {
+        f = f.top(Infinity);
+    } else {}
+    if (typeof (f.dimension) != "undefined") {
+        f = f.dimension(function (d) {
+            return "";
+        }).top(Infinity);
+    } else {}
+    console.log(filter + "(" + f.length + ") = " + JSON.stringify(f).replace("[", "[\n\t").replace(/}\,/g, "},\n\t").replace("]", "\n]"));
+}
+
 var formatComma = d3.format(',');
 var formatDecimalComma = d3.format(",.0f");
 
@@ -69,17 +157,17 @@ var formatMoney = function (d) {
     return "$ " + formatDecimalComma(d);
 };
 
-var monthlyMonths = ['x'],
-    monthlyBeneficiaries = ['Beneficiaries trends'],
-    monthlyTransfer = ['Transfer value trends'];
-
 function checkIntData(d){
     return (isNaN(parseInt(d)) || parseInt(d)<0) ? 0 : parseInt(d);
 };
 
-function generate3WComponent(data, geom) {
+function generate3WComponent() {
+    // var lookup = genLookup(geom, config);
 
-    var lookup = genLookup(geom, config);
+    // cashData.forEach( function(element) {
+    //     element['#value'] = checkIntData(element['#value']);
+    //     element['#beneficiary'] = checkIntData(element['#beneficiary']);
+    // });
 
     var whoChart = dc.rowChart('#hdx-3W-who');
     var whatChart = dc.rowChart('#hdx-3W-what');
@@ -92,38 +180,34 @@ function generate3WComponent(data, geom) {
     var filterRestPie = dc.pieChart('#filterRestriction');
     var filterRuralUrban = dc.pieChart('#filterArea');
 
-    var cf = crossfilter(data);
+    // var cashData = crossfilter(data);
 
-    data.forEach( function(element) {
-        element['#value'] = checkIntData(element['#value']);
-        element['#beneficiary'] = checkIntData(element['#beneficiary']);
-    });
 
-    var whoRegionalDim = cf.dimension(function (d) {
+    var whoRegionalDim = cashData.dimension(function (d) {
         return d["#adm1+name"];
     });
 
-    var whoDimension = cf.dimension(function (d) {
+    var whoDimension = cashData.dimension(function (d) {
         return d[config.whoFieldName];
     });
 
-    var whatDimension = cf.dimension(function (d) {
+    var whatDimension = cashData.dimension(function (d) {
         return d[config.whatFieldName];
     });
-    var whereDimension = cf.dimension(function (d) {
+    var whereDimension = cashData.dimension(function (d) {
         return d[config.whereFieldName];
     });
 
-    var dimMecha = cf.dimension(function (d) {
+    var dimMecha = cashData.dimension(function (d) {
         return d[config.mechanismField];
     });
-    var dimCond = cf.dimension(function (d) {
+    var dimCond = cashData.dimension(function (d) {
         return d[config.conditonalityField];
     });
-    var dimRest = cf.dimension(function (d) {
+    var dimRest = cashData.dimension(function (d) {
         return d[config.restrictionField];
     });
-    var dimRuralUrban = cf.dimension(function (d) {
+    var dimRuralUrban = cashData.dimension(function (d) {
         return d[config.ruralField];
     });
 
@@ -160,7 +244,7 @@ function generate3WComponent(data, geom) {
         return parseInt(d[config.sumField]);
     });
 
-    var all = cf.groupAll();
+    var all = cashData.groupAll();
     //tooltip
     var rowtip = d3.tip().attr('class', 'd3-tip').html(function (d) {
         return d.key + ': ' + d3.format('0,000')(d.value);
@@ -285,7 +369,7 @@ function generate3WComponent(data, geom) {
         .xAxis().ticks(5);
 
     dc.dataCount('#count-info')
-        .dimension(cf)
+        .dimension(cashData)
         .group(all);
     
     whereChart.width($('#hxd-3W-where').width()).height(400)
@@ -311,14 +395,18 @@ function generate3WComponent(data, geom) {
         })
         .featureKeyAccessor(function (feature) {
             return feature.properties[config.joinAttribute];
-        }).popup(function (d) {
-            text = lookup[d.key] + "<br/>No. Beneficiaries : " + formatComma(d.value);
+            // return feature.properties['DIS_CODE'];
+
+        }).popup(function (feature) {
+            // text = lookup[feature.key] + "<br/>No. Beneficiaries : " + formatComma(feature.value);
+            text = feature.key + "<br/>No. Beneficiaries : " + formatComma(feature.value);
+
             return text;
         })
         .renderPopup(true);
 
     $('.monthly-viz-container').show();
-    $('.loader').hide()
+    $('.loader').hide();
     dc.renderAll();
 
     d3.selectAll('g.row').call(rowtip);
@@ -405,84 +493,44 @@ var datesDic = {
 
 function generateKeyFigures (mm, yy) {
     var id = String(yy)+datesDic[mm];
-    $("#peopleAssisted").text(formatComma(parseFloat(globalMonthlyData[id].beneficiaries)));
-    $("#amountTransfered").text(formatMoney(parseFloat(globalMonthlyData[id].value)));
+    $("#peopleAssisted").text(formatComma(parseFloat(settings[id].beneficiaries)));
+    $("#amountTransfered").text(formatMoney(parseFloat(settings[id].value)));
     
 } //fin generateKeyFigures
 
-$('.monthSelectionList').on('change', function(e){
+$('#update').on('click', function(){
     var month = $('.monthSelectionList').val();
     var year = $('.yearSelectionList').val();
-    generateKeyFigures(month, year);
-
     var id = String(year)+datesDic[month];
-    updateMonthlyData(globalMonthlyData[id].link);
+    if (settings[id] !== undefined) {
+        $('.monthly-viz-container').hide();
+        $('.loader').show();
+        generateKeyFigures(month, year);
+        initCashData(settings[id].link);
+        generate3WComponent();
+    }
 
-});
-// since we have 2018 data
-
-// $('.yearSelectionList').on('change', function(e){
-//     var month = $('.monthSelectionList').val();
-//     var year = $('.yearSelectionList').val();
-//     generateKeyFigures(month, year);
-
-//     var id = String(year)+datesDic[month];
-//     updateMonthlyData(globalMonthlyData[id].link);
-
-// });
+})
 
 var monthlyCall = $.ajax({
     type: 'GET',
-    url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D1868352423',
+    url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D1868352423&force=on',
     dataType: 'json'
 })
 
-// donnees de la feuille excel monthly_data
-var globalMonthlyData = {};
+var geomCall = $.ajax({
+    type: 'GET',
+    url: 'data/Somalia_District_Polygon.json',
+    dataType: 'json',
+});
 
-$.when(monthlyCall).then(function(monthlyArgs){
+$.when(geomCall).then(function (geomArgs) {
+    geom = geomArgs;
 
-
-    var monthlyData = hxlProxyToJSON(monthlyArgs);
-    monthlyData.forEach(function (element) {
-        monthlyMonths.push(element['#month']);
-        monthlyBeneficiaries.push(element['#beneficiaries']);
-        monthlyTransfer.push(element['#value']);
-        globalMonthlyData[element['#meta+code']] = {'date':element['#month'],'value':element['#value'],'beneficiaries':element['#beneficiaries'],'link':element['#meta+link']};
-
-    });
     generateLineCharts([monthlyMonths, monthlyBeneficiaries],'#yearlyChart');
     generateLineCharts([monthlyMonths, monthlyTransfer], '#monthlyChart');
     generateKeyFigures(config.lastUpdateMonth, config.lastUpdateYear);
-    updateMonthlyData(config.lastDataURL);
-
+    generate3WComponent();
 });
 
-function updateMonthlyData (dataURL, fonction) {
-    $('.monthly-viz-container').hide();
-    $('.loader').show();
-    var geomCall = $.ajax({
-        type: 'GET',
-        url: config.geo,
-        dataType: 'json',
-    });
-
-    var monthlyCall = $.ajax({
-        type: 'GET',
-        url: dataURL,
-        dataType: 'json'
-    });
-
-    $.when(monthlyCall, geomCall).then(function (dataArgs, geomArgs) {
-
-        var data = hxlProxyToJSON(dataArgs[0]);
-        var geom = geomArgs[0];
-        geom.features.forEach(function (e) {
-            e.properties[config.joinAttribute] = String(e.properties[config.joinAttribute]);
-        });
-        generate3WComponent(data, geom);
-    });
-
-} // fin updateMonthlyData
-
-
+// fin
