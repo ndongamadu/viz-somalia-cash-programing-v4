@@ -82,9 +82,13 @@ hr{
 .monthly-viz-container {
     display: none;
 }
-#reset {
+#update {
     float: right;
     margin-top: 25px;
+}
+
+#reset {
+    float: right;
 }
 
 .col-md-4 {
@@ -104,6 +108,10 @@ hr{
 
 .infos p{
     font-size: 20px;
+}
+
+#pastData {
+    margin-top: 50px;
 }
 
 .d3-tip {

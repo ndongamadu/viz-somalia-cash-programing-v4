@@ -38,13 +38,13 @@
                 <select class="monthSelectionList">
                     <!-- <option value="January">January</option>
                     <option value="February">February</option>
-                    <option value="March">March</option>
-                    <option value="April">April</option> -->
+                    <option value="March">March</option>-->
+                    <option value="April">April</option> 
                     <option value="May">May</option>
                     <option value="June">June</option>
                     <option value="July">July</option>
                     <option value="August">August</option>
-                    <!-- <option value="September">September</option> -->
+                    <option value="September">September</option>
                     <option value="October">October</option>
                     <!-- <option value="November">November</option>
                     <option value="December">December</option> -->
@@ -58,7 +58,7 @@
                 </select>
             </div>
             <div class="col-md-1 col-sm-4 col-xs-4 pull-right">
-            <h5><a class="reset btn btn-primary btn-sm" id="reset" href="javascript:dc.filterAll();dc.redrawAll();">Reset filters</a></h5>
+            <h5><a class="reset btn btn-primary btn-sm" id="update">Update</a></h5>
             </div>
         </div>
         <hr>
@@ -108,7 +108,8 @@
                 </div>
                 <div class="col-md-6 col-sm-12 col-xs-12">
                     <div class="row">
-                        <h4>Cash transfer by district</h4>
+                        <h4>Cash transfer by district <a class="reset pull-right" id="reset" href="javascript:dc.filterAll();dc.redrawAll();">Clear filters</a></h4>
+                            
                         <div id="hdx-3W-where" class="hdx-3w-chart"></div>
                         <p class="small">The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.</p>
                     </div>
