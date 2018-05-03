@@ -2,7 +2,6 @@ var config = {
     mostUpdatedCode: "0",
     lastUpdateMonth: "May",
     lastUpdateYear: "2017",
-    // lastDataURL: "https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D251024910",
     lastDataURL:'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D1685091410',
     whoFieldName: "#org",
     whatFieldName: "#sector",
@@ -42,18 +41,21 @@ var initSettings = (function(){
         success: function(args){
             var dataSettings = hxlProxyToJSON(args);
             dataSettings.forEach( function(element) {
-                settings[element['#meta+code']] = {'month':element['#date+month+name'],'year':element['#date+year'],'value':element['#value'],'beneficiaries':element['#beneficiaries'],'link':element['#meta+link']};
+                settings[element['#meta+code']] = {'month':element['#date+month+name'],'year':element['#date+year'],'value':element['#value'],'beneficiaries':element['#beneficiary'],'link':element['#meta+link']};
                 monthlyMonths.push(element['#date+month']);
-                monthlyBeneficiaries.push(element['#beneficiaries']);
+                monthlyBeneficiaries.push(element['#beneficiary']);
                 monthlyTransfer.push(element['#value']);
                 //globalMonthlyData[element['#meta+code']] = {'date':element['#month'],'link':element['#meta+link']};
             });
+        },
+        complete: function(){
+            initConfig();
+            initCashData(config.lastDataURL);
         }
     })
 
 })();
-initConfig();
-initCashData(config.lastDataURL);
+
 
 function initConfig() {
     var bigger = 1;
@@ -162,7 +164,7 @@ function checkIntData(d){
 };
 
 function generate3WComponent() {
-    // var lookup = genLookup(geom, config);
+    var lookup = genLookup();
 
     // cashData.forEach( function(element) {
     //     element['#value'] = checkIntData(element['#value']);
@@ -394,12 +396,10 @@ function generate3WComponent() {
             return c
         })
         .featureKeyAccessor(function (feature) {
-            return feature.properties[config.joinAttribute];
-            // return feature.properties['DIS_CODE'];
+            return feature.properties['DIS_CODE'];
 
         }).popup(function (feature) {
-            // text = lookup[feature.key] + "<br/>No. Beneficiaries : " + formatComma(feature.value);
-            text = feature.key + "<br/>No. Beneficiaries : " + formatComma(feature.value);
+            text = lookup[feature.key] + "<br/>No. Beneficiaries : " + formatComma(feature.value);
 
             return text;
         })
@@ -426,10 +426,10 @@ function generate3WComponent() {
         ]);
     }
 
-    function genLookup(geojson, config) {
+    function genLookup() {
         var lookup = {};
-        geojson.features.forEach(function (e) {
-            lookup[e.properties[config.joinAttribute]] = String(e.properties[config.nameAttribute]);
+        geom.features.forEach(function (e) {
+            lookup[e.properties['DIS_CODE']] = String(e.properties['DIST_NAME']);
         });
         return lookup;
     }
@@ -477,15 +477,15 @@ function generateLineCharts(data, bindTo){
 } //fin generateLineCharts
 
 var datesDic = {
-        'January':'1',
-        'February':'2',
-        'March':'3',
-        'April':'4',
-        'May':'5',
-        'June':'6',
-        'July':'7',
-        'August':'8',
-        'September':'9',
+        'January':'01',
+        'February':'02',
+        'March':'03',
+        'April':'04',
+        'May':'05',
+        'June':'06',
+        'July':'07',
+        'August':'08',
+        'September':'09',
         'October':'10',
         'November':'11',
         'December':'12'
@@ -498,6 +498,7 @@ function generateKeyFigures (mm, yy) {
     
 } //fin generateKeyFigures
 
+
 $('#update').on('click', function(){
     var month = $('.monthSelectionList').val();
     var year = $('.yearSelectionList').val();
@@ -508,6 +509,8 @@ $('#update').on('click', function(){
         generateKeyFigures(month, year);
         initCashData(settings[id].link);
         generate3WComponent();
+    }else{
+        $('.alert').append('<div class="alert alert-info alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><strong>Success!</strong>Data not/yet available.</div>');
     }
 
 })
@@ -526,7 +529,6 @@ var geomCall = $.ajax({
 
 $.when(geomCall).then(function (geomArgs) {
     geom = geomArgs;
-
     generateLineCharts([monthlyMonths, monthlyBeneficiaries],'#yearlyChart');
     generateLineCharts([monthlyMonths, monthlyTransfer], '#monthlyChart');
     generateKeyFigures(config.lastUpdateMonth, config.lastUpdateYear);
