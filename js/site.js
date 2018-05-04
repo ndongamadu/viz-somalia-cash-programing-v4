@@ -417,7 +417,8 @@ function generate3WComponent() {
 
     var map = whereChart.map();
     zoomToGeom(geom);
-
+    map.options.minZoom = 5;
+    map.options.maxZoom = 7;
     function zoomToGeom(geom) {
         var bounds = d3.geo.bounds(geom);
         map.fitBounds([
@@ -510,7 +511,7 @@ $('#update').on('click', function(){
         initCashData(settings[id].link);
         generate3WComponent();
     }else{
-        $('.alert').append('<div class="alert alert-info alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><strong>Success!</strong>Data not/yet available.</div>');
+        $('.alert').append('<div class="alert alert-warning alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><strong>Data not/yet available.</strong></div>');
     }
 
 })
