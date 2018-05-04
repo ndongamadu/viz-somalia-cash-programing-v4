@@ -417,7 +417,8 @@ function generate3WComponent() {
 
     var map = whereChart.map();
     zoomToGeom(geom);
-
+    map.options.minZoom = 5;
+    map.options.maxZoom = 7;
     function zoomToGeom(geom) {
         var bounds = d3.geo.bounds(geom);
         map.fitBounds([
