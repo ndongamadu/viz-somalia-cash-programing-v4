@@ -511,8 +511,7 @@ $('#update').on('click', function(){
         initCashData(settings[id].link);
         generate3WComponent();
     }else{
-        $('.alert').html('');
-        $('.alert').append('<div class="alert alert-warning alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><strong>Data not/yet available.</strong></div>');
+        $('#myModal').modal('show');
     }
 
 })
