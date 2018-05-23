@@ -25,8 +25,8 @@ var globalMonthlyData = {},
     settings = {};
 
 var monthlyMonths = ['x'],
-    monthlyBeneficiaries = ['Beneficiaries trends'],
-    monthlyTransfer = ['Transfer value trends'];
+    monthlyBeneficiaries = ['Beneficiaries'],
+    monthlyTransfer = ['Transfer value'];
 
 function updateSelectionMonthYear (mm, yy) {
 
