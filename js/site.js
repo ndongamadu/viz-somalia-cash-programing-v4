@@ -15,8 +15,7 @@ var config = {
     conditonalityField: "#indicator+conditionality",
     restrictionField: "#indicator+restriction",
     ruralField: "#loc+type",
-    transferValue: "#beneficiary",
-    estimatedField: "#indicator+amount+total"
+    transferValue: "#value+total"
 };
 
 var globalMonthlyData = {},
@@ -35,7 +34,9 @@ function updateSelectionMonthYear (mm, yy) {
 var initSettings = (function(){
     $.ajax({
         type: 'GET',
-        url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D0&force=on',
+        url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D575563760&force=on',
+        //production
+        //url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D0&force=on',
         format: 'json',
         async: false,
         success: function(args){
@@ -56,6 +57,10 @@ var initSettings = (function(){
 
 })();
 
+// console.log(monthlyMonths)
+// console.log(monthlyBeneficiaries)
+// console.log(monthlyTransfer)
+
 
 function initConfig() {
     var bigger = 1;
@@ -74,7 +79,7 @@ function initConfig() {
         config.lastUpdateYear = settings[bigger].year ;
     }
     
-} //end of configLastDataCode
+} //end of initConfig
 
 function initCashData(dataLink) {
     var dataCash = (function(){
@@ -181,6 +186,9 @@ function generate3WComponent() {
     var filtercondPie = dc.pieChart('#filterConditionality');
     var filterRestPie = dc.pieChart('#filterRestriction');
     var filterRuralUrban = dc.pieChart('#filterArea');
+    var numOfPartners = dc.numberDisplay('#numberOfOrgs');
+    var amountTransfered = dc.numberDisplay('#amountTransfered');
+    var peopleAssisted = dc.numberDisplay('#peopleAssisted');
 
     // var cashData = crossfilter(data);
 
@@ -247,6 +255,69 @@ function generate3WComponent() {
     });
 
     var all = cashData.groupAll();
+
+    var gp = cashData.groupAll().reduce(
+        function (p, v) {
+            p.peopleAssisted += +v[config.sumField];
+            p.amountTransfered += +v[config.transferValue];
+            if (v[config.whoFieldName] in p.orgas)
+                p.orgas[v[config.whoFieldName]]++;
+            else {
+                p.orgas[v[config.whoFieldName]] = 1;
+                p.numOrgs++;
+            }
+
+            return p;
+        },
+        function (p, v) {
+            p.peopleAssisted -= +v[config.sumField];
+            p.amountTransfered -= +v[config.transferValue];
+            
+            p.orgas[v[config.whoFieldName]]--;
+            if (p.orgas[v[config.whoFieldName]] == 0) {
+                delete p.orgas[v[config.whoFieldName]];
+                p.numOrgs--;
+            }
+
+            if (p.peopleAssisted < 0) p.peopleAssisted = 0;
+            if (p.amountTransfered < 0) p.amountTransfered = 0;
+
+            return p;
+        },
+        function () {
+            return {
+                peopleAssisted: 0,
+                amountTransfered: 0,
+                numOrgs: 0,
+                orgas: []
+            };
+
+        }
+    );
+    var numO = function (d) {
+        return d.numOrgs;
+    };
+
+    var amount = function(d){
+        return d.amountTransfered;
+    }
+
+    var peopleA = function(d){
+        return d.peopleAssisted;
+    }
+
+    numOfPartners.group(gp)
+        .valueAccessor(numO)
+        .formatNumber(formatDecimalComma);
+
+    amountTransfered.group(gp)
+        .valueAccessor(amount)
+        .formatNumber(formatMoney);
+
+    peopleAssisted.group(gp)
+        .valueAccessor(peopleA)
+        .formatNumber(formatDecimalComma);
+
     //tooltip
     var rowtip = d3.tip().attr('class', 'd3-tip').html(function (d) {
         return d.key + ': ' + d3.format('0,000')(d.value);
@@ -289,7 +360,7 @@ function generate3WComponent() {
 
         .dimension(dimCond)
         .group(groupCond)
-        //.colors(colorScale3)
+        .colors(colorScale3)
         .title(function (d) {
             return;
         }).on('renderlet', function (chart) {
@@ -441,7 +512,7 @@ function generate3WComponent() {
 
 }// gin generate3WComponent
 
-function generateLineCharts(data, bindTo){
+function generateLineCharts(x, data1, data2, bindTo){
    c3.generate({
         bindto: bindTo,
         size: {
@@ -449,14 +520,18 @@ function generateLineCharts(data, bindTo){
         },
         data: {
             x: 'x',
-            columns: data //[monthlyMonths, monthlyBeneficiaries, monthlyTransfer]
+            columns: [
+            x,
+            data1,
+            data2
+            ]
         },
         axis: {
             x: {
                 type: 'timeseries',
-                localtime: false,
+                //localtime: false,
                 tick: {
-                    count:6,
+                    //count:6,
                     format: '%b %Y'
                 }
             },
@@ -507,7 +582,7 @@ $('#update').on('click', function(){
     if (settings[id] !== undefined) {
         $('.monthly-viz-container').hide();
         $('.loader').show();
-        generateKeyFigures(month, year);
+        // generateKeyFigures(month, year);
         initCashData(settings[id].link);
         generate3WComponent();
     }else{
@@ -530,9 +605,8 @@ var geomCall = $.ajax({
 
 $.when(geomCall).then(function (geomArgs) {
     geom = geomArgs;
-    generateLineCharts([monthlyMonths, monthlyBeneficiaries],'#yearlyChart');
-    generateLineCharts([monthlyMonths, monthlyTransfer], '#monthlyChart');
-    generateKeyFigures(config.lastUpdateMonth, config.lastUpdateYear);
+    generateLineCharts(monthlyMonths,monthlyBeneficiaries, monthlyTransfer, '#yearlyChart');
+    // generateKeyFigures(config.lastUpdateMonth, config.lastUpdateYear);
     generate3WComponent();
 });
 
