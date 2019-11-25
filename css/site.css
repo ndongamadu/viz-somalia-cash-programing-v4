@@ -11,6 +11,12 @@ h4 {
     font-size: 19px;
 }
 
+
+.pull-right {
+    padding-top: 10px;
+    font-size: 16px;
+}
+
 .dc-chart g.row text {
     /*    fill: #4d4d4d;*/
     fill: #4d4d4d;
