@@ -4,6 +4,7 @@
     <title>HDX Somalia Cash</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel='icon' type='image/png' href='https://data.humdata.org/images/icons/hdx.ico' />
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="css/dc.css" />
     <link rel="stylesheet" type="text/css" href="css/site.css" />
@@ -15,6 +16,7 @@
     <script src="js/jquery.js"></script>
     <script src="js/d3.min.js"></script>
     <script src="js/d3.tip.min.js"></script>
+    <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
     <script src="js/crossfilter.v1.min.js"></script>
     <script src="js/dc.js"></script>
     <script src="js/leaflet.js"></script>
@@ -130,12 +132,21 @@
                     <div id="filterMechanism"></div>
                 </div>
             </div>
+
+            <!--  redesign-->
             <div class="row">
-                <div class="col-md-6 col-sm-12 col-xs-12">
-                    <h4>Cash transfer by region (No. individuals)</h4>
-                    <div id="regionalCash"></div>
+
+                <div class="col-md-4">
+                    <h4>Top 15 cash transfer by partner</h4>
+                    <div id="hdx-3W-who" class="hdx-3w-chart"></div>
                 </div>
-                <div class="col-md-6 col-sm-12 col-xs-12">
+
+                <div class="col-md-4">
+                    <h4>Cash transfer by region (No. individuals)</h4>
+                    <div id="regionalCash"  class="hdx-3w-chart"></div>
+                </div>
+
+                <div class="col-md-4">
                     <div class="row">
                         <h4>Cash transfer by district <a class="reset pull-right" id="reset" href="javascript:dc.filterAll();dc.redrawAll();">Clear filters</a></h4>
                         <div id="hdx-3W-where" class="hdx-3w-chart"></div>
@@ -143,17 +154,48 @@
                     </div>
                 </div>
             </div>
+
+            <!--  redesign-->
+
             <div class="row">
+<!--                 <div class="col-md-6 col-sm-12 col-xs-12">
+                    <h4>Cash transfer by region (No. individuals)</h4>
+                    <div id="regionalCash"></div>
+                </div> -->
                 <div class="col-md-6 col-sm-12 col-xs-12">
+<!--                     <div class="row">
+                        <h4>Cash transfer by district <a class="reset pull-right" id="reset" href="javascript:dc.filterAll();dc.redrawAll();">Clear filters</a></h4>
+                        <div id="hdx-3W-where" class="hdx-3w-chart"></div>
+                        <p class="small">The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.</p>
+                    </div> -->
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <h4>Cash transfer by cluster (No. individuals)</h4>
+                    <div id="hdx-3W-what" class="hdx-3w-chart"></div>
+                </div>
+                <div class="col-md-4">
+                    <h4>MPCA projections</h4>
+                    <img src="proj.svg" alt="">
+                </div>
+                <div class="col-md-4">
+                    <h4>IPC projections</h4>
+                    <div id="ipcmap"></div>
+                </div>
+            </div>
+            <div class="row">
+<!--                 <div class="col-md-6 col-sm-12 col-xs-12">
                     <h4>Top 15 cash transfer by partner (No. individuals)</h4>
                     <div id="hdx-3W-who" class="hdx-3w-chart"></div>
-                </div>
+                </div> -->
 
                 <div class="col-md-6 col-sm-12 col-xs-12">
-                    <div class="row">
+<!--                     <div class="row">
                         <h4>Cash transfer by cluster (No. individuals)</h4>
                         <div id="hdx-3W-what" class="hdx-3w-chart"></div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
             <hr>

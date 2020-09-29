@@ -28,6 +28,10 @@ h4 {
     font-size: 1.0em;
 }
 
+/*#regionalCash g.row rect {
+    fill: #A4D65E;
+}*/
+
 .dc-chart .pie-slice {
     fill: #4d4d4d;
     font-size: 1.0em;
@@ -52,7 +56,7 @@ h4 {
 }
 
 #whoRegional {
-    height: 360px;
+    height: 400px;
     width: 100%;
 }
 
@@ -127,6 +131,25 @@ hr{
     font-size: 14px;
 }
 
+/*.d3-tip {
+    padding:5px;
+    background-color:white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    font-size:1em;
+}*/
+.map-tip{
+  position: absolute;
+}
+.map-tip h6{
+    margin: 5px;
+    color: #4d4d4d;
+}
+.hidden { 
+  display: none; 
+}
+
 .loader {
     animation: spin 2s linear infinite;
     border: 8px solid #f3f3f3; /* Light grey */
@@ -147,4 +170,12 @@ hr{
 
 .alert{
     position: relative;
+}
+
+img {
+    height: 400px;
+}
+
+.ipcLegend {
+    position: absolute; 
 }

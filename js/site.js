@@ -1,3 +1,31 @@
+function hxlProxyToJSON(input, headers) {
+    var output = [];
+    var keys = []
+    input.forEach(function (e, i) {
+        if (i == 0) {
+            e.forEach(function (e2, i2) {
+                var parts = e2.split('+');
+                var key = parts[0]
+                if (parts.length > 1) {
+                    var atts = parts.splice(1, parts.length);
+                    atts.sort();
+                    atts.forEach(function (att) {
+                        key += '+' + att
+                    });
+                }
+                keys.push(key);
+            });
+        } else {
+            var row = {};
+            e.forEach(function (e2, i2) {
+                row[keys[i2]] = e2;
+            });
+            output.push(row);
+        }
+    });
+    return output;
+}
+
 var config = {
     mostUpdatedCode: "0",
     lastUpdateMonth: "May",
@@ -18,6 +46,235 @@ var config = {
     transferValue: "#value+total"
 };
 
+var somAdm2LocLink = 'data/somAdm2.json';
+var somAdm2Loc ;
+
+function getSomAdm2Loc() {
+    somAdm2Loc = (function(){
+        var data;
+        $.ajax({
+            type: 'GET',
+            url: somAdm2LocLink,
+            format: 'json',
+            async: false,
+            success: function(adm2){
+                data = adm2;
+            }
+        });
+        return data;
+    })(); 
+    
+}//getSomAdm2Loc 
+
+// function createProportionalCircles() {
+//     d3.select('#reachedLayer').selectAll('.reached').remove();
+
+//     var circles = d3.select('#reachedLayer').selectAll('circle')
+//         .data(somAdm2Loc).enter()
+//         .append('circle')
+//         .attr('cx', function(d){
+//             return 
+//         })
+     
+// } //createProportionalCircles
+
+// var ipcDataLink = 'https://proxy.hxlstandard.org/data.objects.json?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0';
+var ipcDataLink = 'https://proxy.hxlstandard.org/data.objects.json?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0';
+//var ipcDataLink ='https://proxy.hxlstandard.org/data.csv?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0';
+var ipcData;
+
+var mapsvg, 
+    g,
+    projection;
+
+var fillCircle = '#418FDE';
+var fillcolor = '#dddddd';
+var ipcStressed = '#e5e692';
+var ipcStressedRange = ['red', 'yellow', 'orange', 'green', '#e5e692'];
+var ipcCrisis = '#e5921d';
+var ipcCrisisRange = [];
+var ipcEmergency = '#cc3f39';
+var ipcEmergencyRange = [];
+
+
+function getIPCValueFromAdm2(adm2) {
+    var val = 100000;
+    // adm2 == 'Banadir' ? val = 15000 : 
+    // adm2 == 'Buuhoodle' ? val = 40000 :
+    // adm2 == 'Bossaso' ? val = 70000 : '';
+
+    return val;
+}//getIPCValueFromAdm2 
+
+
+function showMapTooltip(d, maptip, text){
+    var mouse = d3.mouse(mapsvg.node()).map( function(d) { return parseInt(d); } );
+    maptip
+        .classed('hidden', false)
+        .attr('style', 'left:'+(mouse[0]+20)+'px;top:'+(mouse[1]+20)+'px')
+        .html(text)
+}
+
+function hideMapTooltip(maptip) {
+    maptip.classed('hidden', true) 
+}
+
+function generateIPCMap(){
+    var maxStressed = 100000,
+        maxCrisis,
+        maxEmergency;
+    ipcData = (function(){
+    var data;
+    $.ajax({
+        type: 'GET',
+        url: ipcDataLink,
+        format: 'csv',
+        async: false,
+        success: function(ipc){
+            data = ipc;//hxlProxyToJSON(ipc);
+        }
+    });
+    return data;
+    })();
+
+    getSomAdm2Loc();
+
+    var ipcStressedColorScale = d3.scale.quantize()
+            .domain([0, maxStressed])
+            .range(ipcStressedRange);
+
+    var ipcCrisisColorScale = d3.scale.quantize()
+            .domain([0, maxCrisis])
+            .range(ipcCrisisRange);
+
+    var ipcEmergencyColorScale = d3.scale.quantize()
+            .domain([0, maxEmergency])
+            .range(ipcEmergencyRange);
+
+    var width = 490;//$('#map').width();
+    var height = 400;
+    var mapScale = width*3.2;
+
+    projection = d3.geo.mercator()
+      .center([47, 5])
+      .scale(mapScale)
+      .translate([width / 2, height / 2]);
+
+    var path = d3.geo.path().projection(projection);
+
+    mapsvg = d3.select('#ipcmap').append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    var maptip = d3.select('#ipcmap').append('div').attr('class', 'd3-tip map-tip hidden');
+
+    g = mapsvg.append("g").attr('id', 'adm2')
+              .selectAll("path")
+              .data(geom.features)
+              .enter()
+                .append("path")
+                .attr('d',path)
+                .attr('id', function(d){ 
+                    return d.properties.DIST_NAME; 
+                })
+                .attr("fill", function(d){
+                    var val = getIPCValueFromAdm2(d.properties.DIST_NAME);
+                    return ipcStressedColorScale(val);
+                })
+                .attr('stroke-width', 1)
+                .attr('stroke', '#7d868d');
+
+    var text = '<h6>% of People in need: 100%</h6>'+
+            '<h6>% of People reached: 100%</h6>'+
+            '<h6>Population: 12345</h6>';
+
+    var districts = d3.select('#adm2').selectAll('path')
+      .on('mousemove', function(d){
+        // console.log(d)
+        showMapTooltip(d, maptip, text);
+      })
+      .on('mouseout', function(){
+        hideMapTooltip(maptip);
+      });
+
+    // creaate proportional circles
+    // var g = mapsvg.append('g').attr('id', 'reachedLayer');
+    // // d3.select('#reachedLayer').selectAll('.reached').remove();
+
+    // var circles = d3.select('#reachedLayer').selectAll('circle')
+    //     .data(somAdm2Loc).enter()
+    //     .append('circle')
+    //     .attr('cx', function(d){
+    //         return projection([d.X, d.Y])[0];
+    //     })
+    //     .attr('cy', function(d){
+    //         return projection([d.X, d.Y])[1];
+    //     })
+    //     .attr('r', function(d){
+    //         var rr = 3;
+    //         if(d.admin2Name == 'Baki' || d.admin2Name == 'Baydhaba' || d.admin2Name == 'Caluula') {
+    //             rr = 10;
+    //         }
+    //         return rr;
+    //     })
+    //     .attr('opacity', 1)
+    //     .attr('fill', fillCircle)
+    //     .attr('class', 'reached');
+
+
+    var ipcLegend = d3.select('#ipcmap').append('div')
+                      .attr('class', 'ipcLegend')
+                      .style('top', height-30)
+                      .style('right', 10);
+
+    var html = '';//'<p>Select IPC phase</p>';
+    var labels = ['Stressed', 'Crisis', 'Emergency'];
+    for (var i = 0; i < labels.length; i++) {
+        if (i == 0) {
+            html += '<input type="checkbox" checked name='+labels[i].toLowerCase()+'> '+labels[i]+'<br>';
+        } else {
+            html += '<input type="checkbox" name='+labels[i].toLowerCase()+'> '+labels[i]+'<br>';
+        }
+    }
+    ipcLegend.html(html);
+
+    $("input[name='stressed']").change(function() {
+        if(this.checked) {
+            mapsvg.selectAll('path').each(function(ele){
+                d3.select(this).transition().duration(600).attr('fill', ipcStressed);
+            });
+            $("input[name='crisis']").prop('checked', false);
+            $("input[name='emergency']").prop('checked', false);
+        }
+    });
+
+    $("input[name='crisis']").change(function() {
+        if(this.checked) {
+            // d3.select('#adm2 path').attr('fill', function(d){
+            //     console.log(this.id)
+            //     return ipcCrisis;
+            // });
+            mapsvg.selectAll('path').each(function(ele){
+                d3.select(this).transition().duration(600).attr('fill', ipcCrisis);
+            });
+            $("input[name='stressed']").prop('checked', false);
+            $("input[name='emergency']").prop('checked', false);
+        }
+    });
+
+    $("input[name='emergency']").change(function() {
+        if(this.checked) {
+            mapsvg.selectAll('path').each(function(ele){
+                d3.select(this).transition().duration(600).attr('fill', ipcEmergency);
+            });
+            $("input[name='stressed']").prop('checked', false);
+            $("input[name='crisis']").prop('checked', false);
+        }
+    });
+
+}
+
+
 var globalMonthlyData = {},
     cashData,
     geom,
@@ -25,7 +282,7 @@ var globalMonthlyData = {},
 
 var monthlyMonths = ['x'],
     monthlyBeneficiaries = ['Beneficiaries'],
-    monthlyTransfer = ['Transfer value'];
+    monthlyTransfer = ['Total value transferred'];
 
 function updateSelectionMonthYear (mm, yy) {
 
@@ -108,33 +365,7 @@ $('.yearSelectionList option').filter(function(){
     return $(this).text() == config.lastUpdateYear;
 }).prop('selected', true);
 
-function hxlProxyToJSON(input, headers) {
-    var output = [];
-    var keys = []
-    input.forEach(function (e, i) {
-        if (i == 0) {
-            e.forEach(function (e2, i2) {
-                var parts = e2.split('+');
-                var key = parts[0]
-                if (parts.length > 1) {
-                    var atts = parts.splice(1, parts.length);
-                    atts.sort();
-                    atts.forEach(function (att) {
-                        key += '+' + att
-                    });
-                }
-                keys.push(key);
-            });
-        } else {
-            var row = {};
-            e.forEach(function (e2, i2) {
-                row[keys[i2]] = e2;
-            });
-            output.push(row);
-        }
-    });
-    return output;
-}
+
 
 function print_filter(filter) {
     var f = eval(filter);
@@ -399,7 +630,7 @@ function generate3WComponent() {
             return;
         });
 
-    whoChart.width($('#hxd-3W-who').width()).height(400)
+    whoChart.width($('#hxd-3W-who').width()).height(450)
         .dimension(whoDimension)
         .group(whoGroup)
         .elasticX(true)
@@ -413,7 +644,7 @@ function generate3WComponent() {
         })
         .xAxis().ticks(5);
 
-    whatChart.width($('#hxd-3W-what').width()).height(350)
+    whatChart.width($('#hxd-3W-what').width()).height(400)
         .dimension(whatDimension)
         .group(whatGroup)
         .elasticX(true)
@@ -428,7 +659,7 @@ function generate3WComponent() {
         .xAxis().ticks(5);
 
 
-    whoRegional.width(585).height(450)
+    whoRegional.width($('#whoRegional').width()).height(450)
         .dimension(whoRegionalDim)
         .group(whoRegionalGroup)
         .elasticX(true)
@@ -604,11 +835,21 @@ var geomCall = $.ajax({
     dataType: 'json',
 });
 
+
+var ipcDataCall = $.ajax({
+    type: 'GET',
+    url: 'https://proxy.hxlstandard.org/data.json?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0',
+    dataType: 'json'
+});
+
 $.when(geomCall).then(function (geomArgs) {
     geom = geomArgs;
+    // ipcData = ipcArgs[0];//hxlProxyToJSON(ipcArgs[0]);
+    // console.log(ipcData)
     generateLineCharts(monthlyMonths,monthlyBeneficiaries, monthlyTransfer, '#yearlyChart');
     // generateKeyFigures(config.lastUpdateMonth, config.lastUpdateYear);
     generate3WComponent();
+    generateIPCMap();
 });
 
 // fin
