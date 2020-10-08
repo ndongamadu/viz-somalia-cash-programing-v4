@@ -54,6 +54,10 @@ var monthlyMonths = ['x'],
     monthlyBeneficiaries = ['Beneficiaries'],
     monthlyTransfer = ['Total value transferred'];
 
+var formatComma = d3.format(',');
+var formatDecimalComma = d3.format(",.0f");
+
+
 var somAdm2LocLink = 'data/somAdm2.json';
 var somAdm2Loc ;
 
@@ -77,34 +81,6 @@ var ipcEmergency = '#cc3f39';
 var ipcEmergencyRange = ['#f4c8c5','#efb1ac','#eb9a93','#e6827a','#e16a16','#dc5348','#d83b2f','#d32416'];
 
 
-
-// function createProportionalCircles() {
-//     d3.select('#reachedLayer').selectAll('.reached').remove();
-
-//     var circles = d3.select('#reachedLayer').selectAll('circle')
-//         .data(somAdm2Loc).enter()
-//         .append('circle')
-//         .attr('cx', function(d){
-//             return 
-//         })
-     
-// } //createProportionalCircles
-
-
-
-
-// var ipcDataCall = $.ajax({
-//     type: 'GET',
-//     url: 'https://proxy.hxlstandard.org/data.json?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0&force=on',
-//     dataType: 'json'
-// });
-
-// $.when(ipcDataCall).then(function(d){
-//     globalIpcData = hxlProxyToJSON(d);
-// });
-
-
-
 var initSettings = (function(){
     $.ajax({
         type: 'GET',
@@ -117,7 +93,7 @@ var initSettings = (function(){
         success: function(args){
             var dataSettings = hxlProxyToJSON(args);
             dataSettings.forEach( function(element) {
-                settings[element['#meta+code']] = {'month':element['#date+month+name'],'year':element['#date+year'],'value':element['#value'],'beneficiaries':element['#beneficiary'],'link':element['#meta+link']};
+                settings[element['#meta+code']] = {'month':element['#date+month+name'],'year':element['#date+year'],'value':element['#value'],'beneficiaries':element['#beneficiary'],'link':element['#meta+link'], 'overview': element['#meta+description']};
                 monthlyMonths.push(element['#date+month']);
                 monthlyBeneficiaries.push(element['#beneficiary']);
                 monthlyTransfer.push(element['#value']);
@@ -417,8 +393,10 @@ function initIPCMap(){
 
 } //initIPCMap
 
-var formatComma = d3.format(',');
-var formatDecimalComma = d3.format(",.0f");
+
+function generateOverviewText(id) {
+    $('#overview span').text(settings[id].overview);
+}
 
 var formatDecimal = function (d) {
     ret = d3.format(".3f");
@@ -854,7 +832,7 @@ $('#update').on('click', function(){
     if (settings[id] !== undefined) {
         $('.monthly-viz-container').hide();
         $('.loader').show();
-        // generateKeyFigures(month, year);
+        generateOverviewText(id);
         initCashData(settings[id].link);
         generate3WComponent();
         mergeIPCPinData();
@@ -887,15 +865,19 @@ var ipcDataCall = $.ajax({
 
 $.when(ipcDataCall, geomCall).then(function (ipc, geomArgs) {
 
+    var month = $('.monthSelectionList').val();
+    var year = $('.yearSelectionList').val();
+    var id = String(year)+datesDic[month];
+
     ipcData = ipc[0];//hxlProxyToJSON(ipc[0]);
     geom = geomArgs[0];
 
+    generateOverviewText(id)
     generateLineCharts(monthlyMonths,monthlyBeneficiaries, monthlyTransfer, '#yearlyChart');
     generate3WComponent();
     initIPCMap();
     mergeIPCPinData();
     choroplethIPCMap();
-
 });
 
 // fin
