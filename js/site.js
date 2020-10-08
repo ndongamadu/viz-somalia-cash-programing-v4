@@ -45,26 +45,38 @@ var config = {
     ruralField: "#loc+type",
     transferValue: "#value+total"
 };
+var globalMonthlyData = {},
+    cashData,
+    geom,
+    settings = {};
+
+var monthlyMonths = ['x'],
+    monthlyBeneficiaries = ['Beneficiaries'],
+    monthlyTransfer = ['Total value transferred'];
 
 var somAdm2LocLink = 'data/somAdm2.json';
 var somAdm2Loc ;
 
-function getSomAdm2Loc() {
-    somAdm2Loc = (function(){
-        var data;
-        $.ajax({
-            type: 'GET',
-            url: somAdm2LocLink,
-            format: 'json',
-            async: false,
-            success: function(adm2){
-                data = adm2;
-            }
-        });
-        return data;
-    })(); 
-    
-}//getSomAdm2Loc 
+
+var ipcData;
+
+var mapsvg, 
+    g,
+    projection;
+
+
+
+var fillCircle = '#418FDE';
+var fillcolor = '#dddddd';
+var ipcStressed = '#e5e692';
+var ipcAllRange = ['#f7fcf5', '#e5f5e0', '#c7e9c0', '#a1d99b', '#74c476', '#41ab5d', '#238b45','#005a32'];
+var ipcStressedRange = ['#faf9e1', '#f8f7d5', '#f6f5c8', '#f4f2bb', '#f1f0ae', '#efeea2', '#edeb95','#ebe988'];
+var ipcCrisis = '#e5921d';
+var ipcCrisisRange = ['#fae1bf','#f8d5a4','#f6c889','#f4bb6d','#f2ae52','#f0a237','#ee951b','#ec8800'];
+var ipcEmergency = '#cc3f39';
+var ipcEmergencyRange = ['#f4c8c5','#efb1ac','#eb9a93','#e6827a','#e16a16','#dc5348','#d83b2f','#d32416'];
+
+
 
 // function createProportionalCircles() {
 //     d3.select('#reachedLayer').selectAll('.reached').remove();
@@ -78,215 +90,20 @@ function getSomAdm2Loc() {
      
 // } //createProportionalCircles
 
-// var ipcDataLink = 'https://proxy.hxlstandard.org/data.objects.json?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0';
-var ipcDataLink = 'https://proxy.hxlstandard.org/data.objects.json?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0';
-//var ipcDataLink ='https://proxy.hxlstandard.org/data.csv?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0';
-var ipcData;
-
-var mapsvg, 
-    g,
-    projection;
-
-var fillCircle = '#418FDE';
-var fillcolor = '#dddddd';
-var ipcStressed = '#e5e692';
-var ipcStressedRange = ['red', 'yellow', 'orange', 'green', '#e5e692'];
-var ipcCrisis = '#e5921d';
-var ipcCrisisRange = [];
-var ipcEmergency = '#cc3f39';
-var ipcEmergencyRange = [];
 
 
-function getIPCValueFromAdm2(adm2) {
-    var val = 100000;
-    // adm2 == 'Banadir' ? val = 15000 : 
-    // adm2 == 'Buuhoodle' ? val = 40000 :
-    // adm2 == 'Bossaso' ? val = 70000 : '';
 
-    return val;
-}//getIPCValueFromAdm2 
+// var ipcDataCall = $.ajax({
+//     type: 'GET',
+//     url: 'https://proxy.hxlstandard.org/data.json?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0&force=on',
+//     dataType: 'json'
+// });
 
-
-function showMapTooltip(d, maptip, text){
-    var mouse = d3.mouse(mapsvg.node()).map( function(d) { return parseInt(d); } );
-    maptip
-        .classed('hidden', false)
-        .attr('style', 'left:'+(mouse[0]+20)+'px;top:'+(mouse[1]+20)+'px')
-        .html(text)
-}
-
-function hideMapTooltip(maptip) {
-    maptip.classed('hidden', true) 
-}
-
-function generateIPCMap(){
-    var maxStressed = 100000,
-        maxCrisis,
-        maxEmergency;
-    ipcData = (function(){
-    var data;
-    $.ajax({
-        type: 'GET',
-        url: ipcDataLink,
-        format: 'csv',
-        async: false,
-        success: function(ipc){
-            data = ipc;//hxlProxyToJSON(ipc);
-        }
-    });
-    return data;
-    })();
-
-    getSomAdm2Loc();
-
-    var ipcStressedColorScale = d3.scale.quantize()
-            .domain([0, maxStressed])
-            .range(ipcStressedRange);
-
-    var ipcCrisisColorScale = d3.scale.quantize()
-            .domain([0, maxCrisis])
-            .range(ipcCrisisRange);
-
-    var ipcEmergencyColorScale = d3.scale.quantize()
-            .domain([0, maxEmergency])
-            .range(ipcEmergencyRange);
-
-    var width = 490;//$('#map').width();
-    var height = 400;
-    var mapScale = width*3.2;
-
-    projection = d3.geo.mercator()
-      .center([47, 5])
-      .scale(mapScale)
-      .translate([width / 2, height / 2]);
-
-    var path = d3.geo.path().projection(projection);
-
-    mapsvg = d3.select('#ipcmap').append("svg")
-        .attr("width", width)
-        .attr("height", height);
-
-    var maptip = d3.select('#ipcmap').append('div').attr('class', 'd3-tip map-tip hidden');
-
-    g = mapsvg.append("g").attr('id', 'adm2')
-              .selectAll("path")
-              .data(geom.features)
-              .enter()
-                .append("path")
-                .attr('d',path)
-                .attr('id', function(d){ 
-                    return d.properties.DIST_NAME; 
-                })
-                .attr("fill", function(d){
-                    var val = getIPCValueFromAdm2(d.properties.DIST_NAME);
-                    return ipcStressedColorScale(val);
-                })
-                .attr('stroke-width', 1)
-                .attr('stroke', '#7d868d');
-
-    var text = '<h6>% of People in need: 100%</h6>'+
-            '<h6>% of People reached: 100%</h6>'+
-            '<h6>Population: 12345</h6>';
-
-    var districts = d3.select('#adm2').selectAll('path')
-      .on('mousemove', function(d){
-        // console.log(d)
-        showMapTooltip(d, maptip, text);
-      })
-      .on('mouseout', function(){
-        hideMapTooltip(maptip);
-      });
-
-    // creaate proportional circles
-    // var g = mapsvg.append('g').attr('id', 'reachedLayer');
-    // // d3.select('#reachedLayer').selectAll('.reached').remove();
-
-    // var circles = d3.select('#reachedLayer').selectAll('circle')
-    //     .data(somAdm2Loc).enter()
-    //     .append('circle')
-    //     .attr('cx', function(d){
-    //         return projection([d.X, d.Y])[0];
-    //     })
-    //     .attr('cy', function(d){
-    //         return projection([d.X, d.Y])[1];
-    //     })
-    //     .attr('r', function(d){
-    //         var rr = 3;
-    //         if(d.admin2Name == 'Baki' || d.admin2Name == 'Baydhaba' || d.admin2Name == 'Caluula') {
-    //             rr = 10;
-    //         }
-    //         return rr;
-    //     })
-    //     .attr('opacity', 1)
-    //     .attr('fill', fillCircle)
-    //     .attr('class', 'reached');
+// $.when(ipcDataCall).then(function(d){
+//     globalIpcData = hxlProxyToJSON(d);
+// });
 
 
-    var ipcLegend = d3.select('#ipcmap').append('div')
-                      .attr('class', 'ipcLegend')
-                      .style('top', height-30)
-                      .style('right', 10);
-
-    var html = '';//'<p>Select IPC phase</p>';
-    var labels = ['Stressed', 'Crisis', 'Emergency'];
-    for (var i = 0; i < labels.length; i++) {
-        if (i == 0) {
-            html += '<input type="checkbox" checked name='+labels[i].toLowerCase()+'> '+labels[i]+'<br>';
-        } else {
-            html += '<input type="checkbox" name='+labels[i].toLowerCase()+'> '+labels[i]+'<br>';
-        }
-    }
-    ipcLegend.html(html);
-
-    $("input[name='stressed']").change(function() {
-        if(this.checked) {
-            mapsvg.selectAll('path').each(function(ele){
-                d3.select(this).transition().duration(600).attr('fill', ipcStressed);
-            });
-            $("input[name='crisis']").prop('checked', false);
-            $("input[name='emergency']").prop('checked', false);
-        }
-    });
-
-    $("input[name='crisis']").change(function() {
-        if(this.checked) {
-            // d3.select('#adm2 path').attr('fill', function(d){
-            //     console.log(this.id)
-            //     return ipcCrisis;
-            // });
-            mapsvg.selectAll('path').each(function(ele){
-                d3.select(this).transition().duration(600).attr('fill', ipcCrisis);
-            });
-            $("input[name='stressed']").prop('checked', false);
-            $("input[name='emergency']").prop('checked', false);
-        }
-    });
-
-    $("input[name='emergency']").change(function() {
-        if(this.checked) {
-            mapsvg.selectAll('path').each(function(ele){
-                d3.select(this).transition().duration(600).attr('fill', ipcEmergency);
-            });
-            $("input[name='stressed']").prop('checked', false);
-            $("input[name='crisis']").prop('checked', false);
-        }
-    });
-
-}
-
-
-var globalMonthlyData = {},
-    cashData,
-    geom,
-    settings = {};
-
-var monthlyMonths = ['x'],
-    monthlyBeneficiaries = ['Beneficiaries'],
-    monthlyTransfer = ['Total value transferred'];
-
-function updateSelectionMonthYear (mm, yy) {
-
-} // end of updateSelectionMonthYear
 
 var initSettings = (function(){
     $.ajax({
@@ -294,7 +111,7 @@ var initSettings = (function(){
         //test
          url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D575563760&force=on',
         //production
-//       url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D0&force=on',
+       // url: 'https://proxy.hxlstandard.org/data.json?strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1PZuC-Kf206kUcizDhz9qtWPR7hvc9hlfDJwirNbaPbk%2Fedit%23gid%3D0&force=on',
         format: 'json',
         async: false,
         success: function(args){
@@ -311,13 +128,10 @@ var initSettings = (function(){
             initConfig();
             initCashData(config.lastDataURL);
         }
-    })
+    });
 
 })();
 
-// console.log(monthlyMonths)
-// console.log(monthlyBeneficiaries)
-// console.log(monthlyTransfer)
 
 
 function initConfig() {
@@ -354,6 +168,7 @@ function initCashData(dataLink) {
     return a;
     })();
     cashData = crossfilter (dataCash); 
+    // mergeIPCPinData();
 
 } //end of initCashData
 
@@ -365,21 +180,247 @@ $('.yearSelectionList option').filter(function(){
     return $(this).text() == config.lastUpdateYear;
 }).prop('selected', true);
 
+function getSomAdm2Loc() {
+    somAdm2Loc = (function(){
+        var data;
+        $.ajax({
+            type: 'GET',
+            url: somAdm2LocLink,
+            format: 'json',
+            async: false,
+            success: function(adm2){
+                data = adm2;
+            }
+        });
+        return data;
+    })(); 
+    
+}//getSomAdm2Loc 
 
 
-function print_filter(filter) {
-    var f = eval(filter);
-    if (typeof (f.length) != "undefined") {} else {}
-    if (typeof (f.top) != "undefined") {
-        f = f.top(Infinity);
-    } else {}
-    if (typeof (f.dimension) != "undefined") {
-        f = f.dimension(function (d) {
-            return "";
-        }).top(Infinity);
-    } else {}
-    console.log(filter + "(" + f.length + ") = " + JSON.stringify(f).replace("[", "[\n\t").replace(/}\,/g, "},\n\t").replace("]", "\n]"));
+
+function showMapTooltip(d, maptip, text){
+    var mouse = d3.mouse(mapsvg.node()).map( function(d) { return parseInt(d); } );
+    maptip
+        .classed('hidden', false)
+        .attr('style', 'left:'+(mouse[0]+20)+'px;top:'+(mouse[1]+20)+'px')
+        .html(text)
 }
+
+function hideMapTooltip(maptip) {
+    maptip.classed('hidden', true) 
+}
+
+var ipcRangePeriod = 'jul_sep';
+
+function mergeIPCPinData() {
+    var yr = '2020'; 
+    var label = '';
+
+    var month = $('.monthSelectionList').val();
+    var year = $('.yearSelectionList').val();
+
+    ['January', 'March'].includes(month) ? ipcRangePeriod = 'jan_mar' : 
+    ['April', 'May', 'June'].includes(month) ? ipcRangePeriod = 'apr_jun' : '';
+
+
+    yr == year ? label = ipcRangePeriod+'_'+yr : label = 'jul_sep_2020';
+
+    var dim = cashData.dimension(function(d){ return d['#adm2+code']; });
+    var grp = dim.group().reduceSum(function(d){ return d['#beneficiary']; }).top(Infinity);
+
+    
+    ipcData.forEach( function(element, index) {
+        var pct_all = null,
+            pct_stressed = null,
+            pct_crisis = null,
+            pct_emergency = null;
+
+        for (var i = 0; i < grp.length; i++) {
+            if(grp[i].key == element.code){
+                var reached = Number(grp[i].value);
+                var ipcSum = Number(element['all_'+label]);
+                var ipcStress = Number(element['stressed_'+label]);
+                var ipcCris = Number(element['crisis_'+label]);
+                var ipcEmer = Number(element['emergency_'+label]);
+                
+                element['#beneficiaries'] = reached;
+                pct_all = Number(((reached*100)/ipcSum).toFixed(2));
+                pct_stressed = Number(((reached*100)/ipcStress).toFixed(2));
+                pct_crisis = Number(((reached*100)/ipcCris).toFixed(2));
+                pct_emergency = Number(((reached*100)/ipcEmer).toFixed(2));
+            }
+         }
+
+        element['#percentage+all'] = pct_all;
+        element['#percentage+stressed'] = pct_stressed;
+        element['#percentage+crisis'] = pct_crisis;
+        element['#percentage+emergency'] = pct_emergency;
+          
+    });
+    var ipcValidy = 'July-Septembre 2020';
+    ipcRangePeriod == 'jan_mar' ? ipcValidy = 'January-March 2020' : 
+    ipcRangePeriod == 'apr_jun' ? ipcValidy = 'April-June 2020' : '';
+
+    $('#ipc h4').text('IPC projections ('+ipcValidy+' )');
+ 
+} //mergeIPCPinData
+
+function choroplethIPCMap(phase) {
+    var pctLabel ;
+    var range ;
+
+    if (phase == undefined) {
+        pctLabel = '#percentage+all';
+        range = ipcAllRange ;
+    } else if (phase == 'stressed' ) {
+        pctLabel = '#percentage+stressed';
+        range = ipcStressedRange ;
+    } else if (phase == 'crisis') {
+        pctLabel = '#percentage+crisis';
+        range = ipcCrisisRange;
+    } else {
+        pctLabel = '#percentage+emergency';
+        range = ipcEmergencyRange;
+    }
+    
+    var ipcColorScale = d3.scale.quantize()
+            .domain([0, 100])
+            .range(range)
+
+     mapsvg.selectAll('path').each( function(element, index) {
+        d3.select(this).transition().duration(500).attr('fill', function(d){
+            var filtered = ipcData.filter(pt => pt.code== d.properties.DIS_CODE);
+            var num = filtered[0][pctLabel] ;
+            var clr = (num == null) ? '#ccc' : ipcColorScale(num);
+            return clr;
+        });
+    });
+
+
+} // choroplethIPCMap
+
+function initIPCMap(){
+
+    getSomAdm2Loc();
+
+    var width = 490;//$('#map').width();
+    var height = 400;
+    var mapScale = width*3.2;
+
+    projection = d3.geo.mercator()
+      .center([47, 5])
+      .scale(mapScale)
+      .translate([width / 2, height / 2]);
+
+    var path = d3.geo.path().projection(projection);
+
+    mapsvg = d3.select('#ipcmap').append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    var maptip = d3.select('#ipcmap').append('div').attr('class', 'd3-tip map-tip hidden');
+
+    g = mapsvg.append("g").attr('id', 'adm2')
+              .selectAll("path")
+              .data(geom.features)
+              .enter()
+                .append("path")
+                .attr('d',path)
+                .attr('id', function(d){ 
+                    return d.properties.DIS_CODE; 
+                })
+                // .attr('name', function(d){
+                //     return d.properties.DIST_NAME;
+                // })
+                .attr('stroke-width', 1)
+                .attr('stroke', '#7d868d');
+
+
+    var ipcLegend = d3.select('#ipcmap').append('div')
+                      .attr('class', 'ipcLegend')
+                      .style('top', height-30)
+                      .style('right', 10);
+
+    var html = '';//'<p>Select IPC phase</p>';
+    var labels = ['All', 'Stressed', 'Crisis', 'Emergency'];
+    for (var i = 0; i < labels.length; i++) {
+        if (i == 0) {
+            html += '<input type="checkbox" checked name='+labels[i].toLowerCase()+'> '+labels[i]+'<br>';
+        } else {
+            html += '<input type="checkbox" name='+labels[i].toLowerCase()+'> '+labels[i]+'<br>';
+        }
+    }
+    ipcLegend.html(html);
+
+    var text = '<h6>% of People in need: 100%</h6>'+
+            '<h6>% of People reached: 100%</h6>'+
+            '<h6>Population: 12345</h6>';
+
+    var districts = d3.select('#adm2').selectAll('path')
+      .on('mousemove', function(d){
+        var filtered = ipcData.filter(pt => pt.code== d.properties.DIS_CODE);
+
+        var label = '';
+        $("input[name='all']").is(":checked") ? label +='all':
+        $("input[name='stressed']").is(":checked") ? label = 'stressed' :
+        $("input[name='crisis']").is(":checked") ? label +='crisis':
+        $("input[name='emergency']").is(":checked") ? label +='emergency': ''
+
+        var pct = filtered[0]['#percentage+'+label];
+        var pin = filtered[0][label+'_'+ipcRangePeriod+'_2020']
+        var txt = '<h5>'+d.properties.DIST_NAME+'</h5>'+
+            '<h6>% of People reached: '+pct+'</h6>'+
+            '<h6> People in Need: '+pin+'</h6>';
+
+        showMapTooltip(d, maptip, txt);
+      })
+      .on('mouseout', function(){
+        hideMapTooltip(maptip);
+      });
+
+
+
+    $("input[name='all']").change(function() {
+        if(this.checked) {
+            $("input[name='stressed']").prop('checked', false);
+            $("input[name='crisis']").prop('checked', false);
+            $("input[name='emergency']").prop('checked', false);
+            choroplethIPCMap();
+        }
+    });
+
+    $("input[name='stressed']").change(function() {
+        if(this.checked) {
+            $("input[name='all']").prop('checked', false);
+            $("input[name='crisis']").prop('checked', false);
+            $("input[name='emergency']").prop('checked', false);
+            choroplethIPCMap('stressed');
+        }
+    });
+
+    $("input[name='crisis']").change(function() {
+        if(this.checked) {
+            $("input[name='stressed']").prop('checked', false);
+            $("input[name='emergency']").prop('checked', false);
+            $("input[name='all']").prop('checked', false);
+            choroplethIPCMap('crisis');
+        }
+    });
+
+    $("input[name='emergency']").change(function() {
+        if(this.checked) {
+            $("input[name='stressed']").prop('checked', false);
+            $("input[name='crisis']").prop('checked', false);
+            $("input[name='all']").prop('checked', false);
+            choroplethIPCMap('emergency');
+        }
+    });
+
+
+
+
+} //initIPCMap
 
 var formatComma = d3.format(',');
 var formatDecimalComma = d3.format(",.0f");
@@ -403,10 +444,6 @@ function checkIntData(d){
 function generate3WComponent() {
     var lookup = genLookup();
 
-    // cashData.forEach( function(element) {
-    //     element['#value'] = checkIntData(element['#value']);
-    //     element['#beneficiary'] = checkIntData(element['#beneficiary']);
-    // });
 
     var whoChart = dc.rowChart('#hdx-3W-who');
     var whatChart = dc.rowChart('#hdx-3W-what');
@@ -657,7 +694,15 @@ function generate3WComponent() {
             return 0;
         })
         .xAxis().ticks(5);
+        // .on('renderlet', function(chart) {
+        //     chart.selectAll('rect').on("click", function(d) {
+        //     console.log("click!", d);
+        //     });
+        // });
 
+    whatChart.selectAll('rect.bar').on("click", function(d) {
+            console.log("click!", d);
+    });
 
     whoRegional.width($('#whoRegional').width()).height(450)
         .dimension(whoRegionalDim)
@@ -817,6 +862,8 @@ $('#update').on('click', function(){
         // generateKeyFigures(month, year);
         initCashData(settings[id].link);
         generate3WComponent();
+        mergeIPCPinData();
+        choroplethIPCMap();
     }else{
         $('#myModal').modal('show');
     }
@@ -835,21 +882,25 @@ var geomCall = $.ajax({
     dataType: 'json',
 });
 
-
 var ipcDataCall = $.ajax({
     type: 'GET',
-    url: 'https://proxy.hxlstandard.org/data.json?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0',
-    dataType: 'json'
+    // url: 'https://proxy.hxlstandard.org/data.json?dest=data_edit&strip-headers=on&url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D0',
+    url: 'https://proxy.hxlstandard.org/api/data-preview.json?url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1XTibmkKIt3B_05AqbLyJ7v6d47185Y-E6XLE-_jteRk%2Fedit%23gid%3D2139334860&format=objects.json',
+    dataType: 'json',
 });
 
-$.when(geomCall).then(function (geomArgs) {
-    geom = geomArgs;
-    // ipcData = ipcArgs[0];//hxlProxyToJSON(ipcArgs[0]);
-    // console.log(ipcData)
+
+$.when(ipcDataCall, geomCall).then(function (ipc, geomArgs) {
+
+    ipcData = ipc[0];//hxlProxyToJSON(ipc[0]);
+    geom = geomArgs[0];
+
     generateLineCharts(monthlyMonths,monthlyBeneficiaries, monthlyTransfer, '#yearlyChart');
-    // generateKeyFigures(config.lastUpdateMonth, config.lastUpdateYear);
     generate3WComponent();
-    generateIPCMap();
+    initIPCMap();
+    mergeIPCPinData();
+    choroplethIPCMap();
+
 });
 
 // fin
