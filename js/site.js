@@ -342,16 +342,11 @@ function initIPCMap(){
                       .style('top', height-30)
                       .style('right', 10);
 
-    var html = '';//'<p>Select IPC phase</p>';
-    var labels = ['All', 'Stressed', 'Crisis', 'Emergency'];
-    for (var i = 0; i < labels.length; i++) {
-        if (i == 0) {
-            html += '<input type="checkbox" checked name='+labels[i].toLowerCase()+'> '+labels[i]+'<br>';
-        } else {
-            html += '<input type="checkbox" name='+labels[i].toLowerCase()+'> '+labels[i]+'<br>';
-        }
-    }
-    ipcLegend.html(html);
+    var inputs = '<input type="checkbox" checked name="all"> All<br>'+ 
+                 '<input type="checkbox" name="stressed"> IPC 3<br>'+
+                 '<input type="checkbox" name="crisis"> IPC 4<br>'+
+                 '<input type="checkbox" name="emergency"> IPC 5';
+    ipcLegend.html(inputs);
 
     var text = '<h6>% of People in need: 100%</h6>'+
             '<h6>% of People reached: 100%</h6>'+
