@@ -26,6 +26,21 @@ function hxlProxyToJSON(input, headers) {
     return output;
 }
 
+
+var title = '<h1 class="header">Cash Based Programming in Somalia<span class="pull-right"><a href="https://data.humdata.org/dataset/cash-based-programming-in-somalia-2018" target="_blank">See the dataset on HDX</a></span></h1>';
+var titleProj = '<h1 class="header">Cash Based Programming in Somalia - MPCA Projections</h1>';
+
+var colorScaler = d3.scale.ordinal().range(['#DDDDDD', '#A7C1D3', '#71A5CA', '#73A9D9', '#8CBCD2', '#3B88C0', '#056CB6']);
+var colorScalerProj = d3.scale.ordinal().range(['#C7EEEB', '#8FDFD9', '#1EBFB3', '#168F86', '#0B4742']);
+
+var colorScaler3 = d3.scale.ordinal().range(['#DDDDDD', '#A7C1D3', '#71A5CA', '#3B88C0']);
+var colorScaler3Proj = d3.scale.ordinal().range(['#C7EEEB', '#8FDFD9', '#1EBFB3', '#168F86']);
+
+var mapCols = ['#DDDDDD', '#A7C1D3', '#71A5CA', '#3B88C0', '#056CB6'];
+var mapColsProj = ['#C7EEEB', '#8FDFD9', '#1EBFB3', '#168F86', '#0B4742'];
+
+var globalColor = "#3B88C0";
+
 var config = {
     mostUpdatedCode: "0",
     lastUpdateMonth: "May",
@@ -38,7 +53,10 @@ var config = {
     geo: "data/Somalia_District_Polygon.json",
     joinAttribute: "DIS_CODE",
     nameAttribute: "DIST_NAME",
-    color: "#3B88C0",
+    color: globalColor,
+    mapColorRange: mapCols,
+    colorScale : colorScaler,
+    colorScale3: colorScaler3,
     mechanismField: "#indicator+mechanism",
     conditonalityField: "#indicator+conditionality",
     restrictionField: "#indicator+restriction",
@@ -203,7 +221,7 @@ function mergeIPCPinData() {
     yr == year ? label = ipcRangePeriod+'_'+yr : label = 'jul_sep_2020';
 
     var dim = cashData.dimension(function(d){ return d['#adm2+code']; });
-    var grp = dim.group().reduceSum(function(d){ return d['#beneficiary']; }).top(Infinity);
+    var grp = dim.group().reduceSum(function(d){ return d[config.sumField]; }).top(Infinity);
 
     
     ipcData.forEach( function(element, index) {
@@ -215,20 +233,20 @@ function mergeIPCPinData() {
         for (var i = 0; i < grp.length; i++) {
             if(grp[i].key == element.code){
                 var reached = Number(grp[i].value);
-                var ipcSum = Number(element['all_'+label]);
+                // var ipcSum = Number(element['all_'+label]);
                 var ipcStress = Number(element['stressed_'+label]);
                 var ipcCris = Number(element['crisis_'+label]);
                 var ipcEmer = Number(element['emergency_'+label]);
                 
                 element['#beneficiaries'] = reached;
-                pct_all = Number(((reached*100)/ipcSum).toFixed(2));
+                // pct_all = Number(((reached*100)/ipcSum).toFixed(2));
                 pct_stressed = Number(((reached*100)/ipcStress).toFixed(2));
                 pct_crisis = Number(((reached*100)/ipcCris).toFixed(2));
                 pct_emergency = Number(((reached*100)/ipcEmer).toFixed(2));
             }
          }
 
-        element['#percentage+all'] = pct_all;
+        // element['#percentage+all'] = pct_all;
         element['#percentage+stressed'] = pct_stressed;
         element['#percentage+crisis'] = pct_crisis;
         element['#percentage+emergency'] = pct_emergency;
@@ -238,7 +256,7 @@ function mergeIPCPinData() {
     ipcRangePeriod == 'jan_mar' ? ipcValidy = 'January-March 2020' : 
     ipcRangePeriod == 'apr_jun' ? ipcValidy = 'April-June 2020' : '';
 
-    $('#ipc h4').text('IPC projections ('+ipcValidy+' )');
+    $('#ipc h4').text('Cash Assistance coverage - Assistance versus need (IPC '+ipcValidy+')');
  
 } //mergeIPCPinData
 
@@ -247,8 +265,8 @@ function choroplethIPCMap(phase) {
     var range ;
 
     if (phase == undefined) {
-        pctLabel = '#percentage+all';
-        range = ipcAllRange ;
+        pctLabel = '#percentage+stressed';
+        range = ipcStressedRange ;
     } else if (phase == 'stressed' ) {
         pctLabel = '#percentage+stressed';
         range = ipcStressedRange ;
@@ -306,6 +324,7 @@ function initIPCMap(){
                 .attr('id', function(d){ 
                     return d.properties.DIS_CODE; 
                 })
+                .attr('fill', '#FFF')
                 // .attr('name', function(d){
                 //     return d.properties.DIST_NAME;
                 // })
@@ -318,9 +337,8 @@ function initIPCMap(){
                       .style('top', height-30)
                       .style('right', 10);
 
-    var inputs = '<input type="checkbox" checked name="all"> All<br>'+ 
-                 '<input type="checkbox" name="stressed"> IPC 3<br>'+
-                 '<input type="checkbox" name="crisis"> IPC 4<br>'+
+    var inputs = '<input type="checkbox" checked name="stressed"> IPC 3+<br>'+
+                 '<input type="checkbox" name="crisis"> IPC 4+<br>'+
                  '<input type="checkbox" name="emergency"> IPC 5';
     ipcLegend.html(inputs);
 
@@ -333,7 +351,7 @@ function initIPCMap(){
         var filtered = ipcData.filter(pt => pt.code== d.properties.DIS_CODE);
 
         var label = '';
-        $("input[name='all']").is(":checked") ? label +='all':
+        // $("input[name='all']").is(":checked") ? label +='all':
         $("input[name='stressed']").is(":checked") ? label = 'stressed' :
         $("input[name='crisis']").is(":checked") ? label +='crisis':
         $("input[name='emergency']").is(":checked") ? label +='emergency': ''
@@ -352,18 +370,17 @@ function initIPCMap(){
 
 
 
-    $("input[name='all']").change(function() {
-        if(this.checked) {
-            $("input[name='stressed']").prop('checked', false);
-            $("input[name='crisis']").prop('checked', false);
-            $("input[name='emergency']").prop('checked', false);
-            choroplethIPCMap();
-        }
-    });
+    // $("input[name='all']").change(function() {
+    //     if(this.checked) {
+    //         $("input[name='stressed']").prop('checked', false);
+    //         $("input[name='crisis']").prop('checked', false);
+    //         $("input[name='emergency']").prop('checked', false);
+    //         choroplethIPCMap();
+    //     }
+    // });
 
     $("input[name='stressed']").change(function() {
         if(this.checked) {
-            $("input[name='all']").prop('checked', false);
             $("input[name='crisis']").prop('checked', false);
             $("input[name='emergency']").prop('checked', false);
             choroplethIPCMap('stressed');
@@ -374,7 +391,6 @@ function initIPCMap(){
         if(this.checked) {
             $("input[name='stressed']").prop('checked', false);
             $("input[name='emergency']").prop('checked', false);
-            $("input[name='all']").prop('checked', false);
             choroplethIPCMap('crisis');
         }
     });
@@ -383,7 +399,6 @@ function initIPCMap(){
         if(this.checked) {
             $("input[name='stressed']").prop('checked', false);
             $("input[name='crisis']").prop('checked', false);
-            $("input[name='all']").prop('checked', false);
             choroplethIPCMap('emergency');
         }
     });
@@ -416,7 +431,6 @@ function checkIntData(d){
 
 function generate3WComponent() {
     var lookup = genLookup();
-
 
     var whoChart = dc.rowChart('#hdx-3W-who');
     var whatChart = dc.rowChart('#hdx-3W-what');
@@ -571,8 +585,6 @@ function generate3WComponent() {
         return d.data.key + ': ' + d3.format('0,000')(d.value);
     });
 
-    var colorScale = d3.scale.ordinal().range(['#DDDDDD', '#A7C1D3', '#71A5CA', '#73A9D9', '#8CBCD2', '#3B88C0', '#056CB6']);
-
 
     filterMechanismPie.width(190)
         .height(190)
@@ -580,20 +592,11 @@ function generate3WComponent() {
         .innerRadius(40)
         .dimension(dimMecha)
         .group(groupMecha)
-        .colors(colorScale)
+        .colors(config.colorScale)
         .title(function (d) {
             return;
-        }).on('renderlet', function (chart) {
-            chart.selectAll('text.pie-slice')
-                .attr('transform', function (d) {
-                    var translate = d3.select(this).attr('transform');
-                    var ang = ((d.startAngle + d.endAngle) / 2 * 180 / Math.PI) % 360;
-                    return translate + ' rotate(' + ang + ')';
-                });
         });
 
-
-    var colorScale3 = d3.scale.ordinal().range(['#DDDDDD', '#A7C1D3', '#71A5CA', '#3B88C0']);
 
     filtercondPie.width(190)
         .height(190)
@@ -602,18 +605,9 @@ function generate3WComponent() {
 
         .dimension(dimCond)
         .group(groupCond)
-        .colors(colorScale3)
+        .colors(config.colorScale3)
         .title(function (d) {
-            return;
-        }).on('renderlet', function (chart) {
-            chart.selectAll('text.pie-slice')
-                .attr('transform', function (d) {
-                    var translate = d3.select(this).attr('transform');
-                    var ang = ((d.startAngle + d.endAngle) / 2 * 180 / Math.PI) % 360;
-                    if (ang < 180) ang -= 90;
-                    else ang += 90;
-                    return translate + ' rotate(' + ang + ')';
-                });
+            return ;
         });
 
     filterRestPie.width(190)
@@ -623,6 +617,7 @@ function generate3WComponent() {
 
         .dimension(dimRest)
         .group(groupRest)
+        .colors(config.colorScale3)
         .title(function (d) {
             return;
         });
@@ -635,7 +630,7 @@ function generate3WComponent() {
 
         .dimension(dimRuralUrban)
         .group(groupRuralUrban)
-        .colors(colorScale3)
+        .colors(config.colorScale3)
         .title(function (d) {
             return;
         });
@@ -701,7 +696,7 @@ function generate3WComponent() {
         .center([0, 0])
         .zoom(0)
         .geojson(geom)
-        .colors(['#DDDDDD', '#A7C1D3', '#71A5CA', '#3B88C0', '#056CB6'])
+        .colors(config.mapColorRange)
         .colorDomain([0, 4])
         .colorAccessor(function (d) {
             var c = 0
@@ -726,8 +721,9 @@ function generate3WComponent() {
         })
         .renderPopup(true);
 
-    $('.monthly-viz-container').show();
     $('.loader').hide();
+    $('.container').css('opacity', 1);
+    
     dc.renderAll();
 
     d3.selectAll('g.row').call(rowtip);
@@ -766,7 +762,7 @@ function generateLineCharts(x, data1, data2, bindTo){
    c3.generate({
         bindto: bindTo,
         size: {
-            height: 200
+            height: 180
         },
         data: {
             x: 'x',
@@ -825,20 +821,71 @@ function generateKeyFigures (mm, yy) {
 } //fin generateKeyFigures
 
 
+
 $('#update').on('click', function(){
+    config.sumField = '#beneficiary';
+    config.color = globalColor;
+    config.mapColorRange = mapCols;
+    config.colorScale = colorScaler;
+    config.colorScale3 = colorScaler3;
+    $('.title').html(title);
+    $('h1.header').css('color', '#000');
+
     var month = $('.monthSelectionList').val();
     var year = $('.yearSelectionList').val();
     var id = String(year)+datesDic[month];
-    if (settings[id] !== undefined) {
-        $('.monthly-viz-container').hide();
+    
+    if (settings[id] != undefined) {
+        // $('.container').css('opacity', 0);
         $('.loader').show();
         generateOverviewText(id);
         initCashData(settings[id].link);
         generate3WComponent();
         mergeIPCPinData();
         choroplethIPCMap();
-    }else{
-        $('#myModal').modal('show');
+    } else{
+        
+        var mois = parseInt(datesDic[config.lastUpdateMonth]);
+        var annee = parseInt(config.lastUpdateYear);
+        for (var i = 1; i < 7; i++) {
+            mois += 1;
+            if (mois >12) {
+                mois = 1;
+                annee += 1;
+            }     
+        }
+        var projEndPeriod = "" ;
+        mois <= 9 ? projEndPeriod = String(annee) + "0"+mois : projEndPeriod = String(annee) +mois;
+
+        id = config.lastUpdateYear+datesDic[config.lastUpdateMonth];
+        var selectedPeriod = String(year)+datesDic[month];
+
+        if (selectedPeriod <= projEndPeriod) {
+            config.sumField = '#targeted+'+month.toLowerCase();
+            config.color = '#1EBFB3';
+            config.mapColorRange = mapColsProj;
+            config.colorScale = colorScalerProj;
+            config.colorScale3 = colorScaler3Proj;
+            $('.title').html(titleProj);
+            $('h1.header').css('color', '#1EBFB3');
+            $('.loader').show();
+            generateOverviewText(id);
+            initCashData(settings[id].link);
+            generate3WComponent();
+            mergeIPCPinData();
+            choroplethIPCMap();
+        } else {
+            $('#myModal').modal('show');
+
+            generateOverviewText(id);
+            initCashData(settings[id].link);
+            generate3WComponent();
+            mergeIPCPinData();
+            choroplethIPCMap();
+            $('.monthSelectionList').val(config.lastUpdateMonth);
+            $('.yearSelectionList').val(config.lastUpdateYear);
+        }
+
     }
 
 })
@@ -864,7 +911,7 @@ var ipcDataCall = $.ajax({
 
 
 $.when(ipcDataCall, geomCall).then(function (ipc, geomArgs) {
-
+    $('.title').html(title);
     var month = $('.monthSelectionList').val();
     var year = $('.yearSelectionList').val();
     var id = String(year)+datesDic[month];

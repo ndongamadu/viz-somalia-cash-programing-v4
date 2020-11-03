@@ -8,24 +8,61 @@ h1 {
 
 h4 {
     color: #222;
-    font-size: 19px;
-}
-
-
-.pull-right {
-    /*padding-top: 10px;*/
     font-size: 16px;
 }
 
+#overview span {
+    font-size: 14px;
+}
+
+select {
+    background-color: #FFF;
+    border-color: #FFF;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    font: 300 14px 'Source Sans Pro', sans-serif;
+    white-space: pre-wrap;
+}
+.yearSelectionList {
+    margin-left: 10px;
+}
+
+#update {
+    border-color: #FFF;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    font: 300 14px 'Source Sans Pro', sans-serif;
+    white-space: pre-wrap;
+    width: 100%;
+    float: right;
+    margin-top: 24px;
+}
+
+#reset {
+    border-color: #FFF;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    font: 300 14px 'Source Sans Pro', sans-serif;
+    float: right;
+}
+
+.pull-right {
+    padding-top: 10px;
+    font-size: 14px;
+}
+
+.monthly-viz-container {
+    margin: 0;
+}
 .dc-chart g.row text {
     /*    fill: #4d4d4d;*/
     fill: #4d4d4d;
-    font-size: 1.0em;
+    font-size: 12px;
 }
 
 #hdx-3W-what g.row text {
     fill: #4d4d4d;
-    font-size: 1.0em;
+    font-size: 12px;
 }
 
 /*#regionalCash g.row rect {
@@ -34,7 +71,7 @@ h4 {
 
 .dc-chart .pie-slice {
     fill: #4d4d4d;
-    font-size: 1.0em;
+    font-size: 11px;
 
 }
 
@@ -87,13 +124,6 @@ hr{
     border-radius: 5px;
 }
 
-.monthly-viz-container {
-    display: none;
-}
-#update {
-    float: right;
-    margin-top: 25px;
-}
 
 #reset {
     float: right;
@@ -103,11 +133,13 @@ hr{
     color: #848484;
 }
 
+.small {
+    color: #000;
+}
 
 #numbers p {
-    /*color: #03a9f4;*/
-    font-size: 22px;
-    padding-left: 0px;
+    color: #000;
+    font-size: 20px;
 }
 
 #filters a {
@@ -116,6 +148,13 @@ hr{
 
 .infos p{
     font-size: 20px;
+}
+
+.desc p {
+    font-size: 14px;
+}
+.desc div {
+    min-height: 220px;
 }
 
 #pastData {
@@ -131,14 +170,6 @@ hr{
     font-size: 14px;
 }
 
-/*.d3-tip {
-    padding:5px;
-    background-color:white;
-    background: rgba(255,255,255,0.8);
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    border-radius: 5px;
-    font-size:1em;
-}*/
 .map-tip{
   position: absolute;
 }
@@ -150,22 +181,41 @@ hr{
   display: none; 
 }
 
+.container {
+    opacity: 0;
+}
 .loader {
-    animation: spin 2s linear infinite;
-    border: 8px solid #f3f3f3; /* Light grey */
-    border-top: 8px solid #3498db; /* Blue */
-    border-radius: 50%;
-    height: 70px;
-    left: 50%;
+    color: #000;
+    font-size: 11px;
+    text-align: center;
     position: absolute;
     top: 50%;
-    transform: translate(-50%,-50%);
-    width: 70px;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.sp {
+    clear: both;
+    height: 32px;
+    margin: 0 auto 5px;
+    width: 32px;
+}
+
+/* Spinner Circle Rotation */
+.sp-circle {
+    border: 4px rgba(0,0,0,0.25) solid;
+    border-top: 4px rgba(0,0,0,1) solid;
+    border-radius: 50%;
+    -webkit-animation: spCircRot .6s infinite linear;
+    animation: spCircRot .6s infinite linear;
+}
+@-webkit-keyframes spCircRot {
+    from { -webkit-transform: rotate(0deg); }
+    to { -webkit-transform: rotate(359deg); }
+}
+@keyframes spCircRot {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(359deg); }
 }
 
 .alert{
@@ -179,3 +229,4 @@ img {
 .ipcLegend {
     position: absolute; 
 }
+
