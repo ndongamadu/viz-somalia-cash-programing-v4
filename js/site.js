@@ -460,6 +460,10 @@ function generate3WComponent() {
     var whatDimension = cashData.dimension(function (d) {
         return d[config.whatFieldName];
     });
+
+    var mpcaFilter = whatDimension.filter("MPCA").top(Infinity);
+    whatDimension.filterAll();
+
     var whereDimension = cashData.dimension(function (d) {
         return d[config.whereFieldName];
     });
@@ -550,17 +554,27 @@ function generate3WComponent() {
 
         }
     );
+
+    var mpcaNumOrgs = [];
+    for (var i = 0; i < mpcaFilter.length; i++) {
+        mpcaNumOrgs.includes(mpcaFilter[i]['#org']) ? '' : mpcaNumOrgs.push(mpcaFilter[i]['#org']);
+    }
+
     var numO = function (d) {
-        return d.numOrgs;
+        var val = (config.sumField=='#beneficiary') ? d.numOrgs : mpcaNumOrgs.length;
+        return val;
     };
 
+
     var amount = function(d){
-        return d.amountTransfered;
+        var val = (config.sumField=='#beneficiary') ? d.amountTransfered : 0 ;
+        return val;
     }
 
     var peopleA = function(d){
         return d.peopleAssisted;
     }
+
 
     numOfPartners.group(gp)
         .valueAccessor(numO)
@@ -830,6 +844,7 @@ $('#update').on('click', function(){
     config.colorScale3 = colorScaler3;
     $('.title').html(title);
     $('h1.header').css('color', '#000');
+    $('#amountTransfered, .number-display').html();
 
     var month = $('.monthSelectionList').val();
     var year = $('.yearSelectionList').val();
@@ -869,6 +884,8 @@ $('#update').on('click', function(){
             $('.title').html(titleProj);
             $('h1.header').css('color', '#1EBFB3');
             $('.loader').show();
+            $('#peopleAssisted h4').html('People assisted (Planned)');
+            
             generateOverviewText(id);
             initCashData(settings[id].link);
             generate3WComponent();
