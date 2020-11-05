@@ -221,7 +221,7 @@ function mergeIPCPinData() {
     yr == year ? label = ipcRangePeriod+'_'+yr : label = 'jul_sep_2020';
 
     var dim = cashData.dimension(function(d){ return d['#adm2+code']; });
-    var grp = dim.group().reduceSum(function(d){ return d[config.sumField]; }).top(Infinity);
+    var grp = dim.group().reduceSum(function(d){ return d["#beneficiary"]; }).top(Infinity);
 
     
     ipcData.forEach( function(element, index) {
@@ -410,7 +410,9 @@ function initIPCMap(){
 
 
 function generateOverviewText(id) {
-    $('#overview span').text(settings[id].overview);
+    var mpcaText = "The MPCA reporting also captures expected cash coverage per month (average) for next 6 months. This is mapped in relation to need (IPC projection) to provide a good overview on the extent to which programming needs to be scaled up. At the top right hand side, under Month and Year, kindly select upcoming months to view expected MPCA programming for that month.";
+    var text = (id==undefined) ? mpcaText : settings[id].overview ;
+    $('#overview span').text(text);
 }
 
 var formatDecimal = function (d) {
@@ -676,15 +678,13 @@ function generate3WComponent() {
             return 0;
         })
         .xAxis().ticks(5);
-        // .on('renderlet', function(chart) {
-        //     chart.selectAll('rect').on("click", function(d) {
-        //     console.log("click!", d);
-        //     });
-        // });
+        
+        whatChart.on('renderlet', function(chart, filter){
+            console.log(filter)
+        });
 
-    whatChart.selectAll('rect.bar').on("click", function(d) {
-            console.log("click!", d);
-    });
+
+
 
     whoRegional.width($('#whoRegional').width()).height(450)
         .dimension(whoRegionalDim)
@@ -877,6 +877,7 @@ $('#update').on('click', function(){
 
         if (selectedPeriod <= projEndPeriod) {
             config.sumField = '#targeted+'+month.toLowerCase();
+            config.transferValue = config.sumField;
             config.color = '#1EBFB3';
             config.mapColorRange = mapColsProj;
             config.colorScale = colorScalerProj;
@@ -886,7 +887,7 @@ $('#update').on('click', function(){
             $('.loader').show();
             $('#peopleAssisted h4').html('People assisted (Planned)');
             
-            generateOverviewText(id);
+            generateOverviewText();
             initCashData(settings[id].link);
             generate3WComponent();
             mergeIPCPinData();
