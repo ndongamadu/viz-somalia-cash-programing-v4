@@ -959,7 +959,7 @@ $('#update').on('click', function(){
     config.colorScale3 = colorScaler3;
     $('.title').html(title);
     $('h1.header').css('color', '#000');
-    $('#amountTransfered, .number-display').html();
+    // $('#amountTransfered, .number-display').html();
 
     var month = $('.monthSelectionList').val();
     var year = $('.yearSelectionList').val();
@@ -992,7 +992,7 @@ $('#update').on('click', function(){
 
         if (selectedPeriod <= projEndPeriod) {
             config.sumField = '#targeted+'+month.toLowerCase();
-            config.transferValue = config.sumField;
+            // config.transferValue = config.sumField;
             config.color = '#1EBFB3';
             config.mapColorRange = mapColsProj;
             config.colorScale = colorScalerProj;
